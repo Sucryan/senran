@@ -2,9 +2,10 @@
   "name": "senran-vscode",
   "displayName": "森蚺 (Senran) — 文言 Python 智囊輔助",
   "description": "以文言驅策萬象 Python 函式庫：提供古典詞律智慧補全、懸停解經與常用代碼片段",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "publisher": "sucryan",
   "license": "MIT",
+  "icon": "icon.png",
   "engines": {
     "vscode": "^1.75.0"
   },
@@ -31,8 +32,15 @@
     "languages": [
       {
         "id": "senran",
-        "aliases": ["Senran", "森蚺", "文言Python"],
-        "extensions": [".sr", ".senran"]
+        "aliases": [
+          "Senran",
+          "森蚺",
+          "文言Python"
+        ],
+        "extensions": [
+          ".sr",
+          ".senran"
+        ]
       }
     ],
     "grammars": [
@@ -63,35 +71,18 @@
       "editor/context": [
         {
           "command": "senran.transcribe",
-          "when": "editorTextFocus",
+          "when": "editorTextFocus && (resourceLangId == python || resourceLangId == senran || resourceLangId == markdown)",
           "group": "navigation@1"
         },
         {
           "command": "senran.toStandardPy",
-          "when": "editorTextFocus",
+          "when": "editorTextFocus && (resourceLangId == python || resourceLangId == senran || resourceLangId == markdown)",
           "group": "navigation@2"
         },
         {
           "command": "senran.formatPianwen",
-          "when": "editorTextFocus",
+          "when": "editorTextFocus && (resourceLangId == python || resourceLangId == senran || resourceLangId == markdown)",
           "group": "navigation@3"
-        }
-      ],
-      "editor/title": [
-        {
-          "command": "senran.transcribe",
-          "when": "resourceLangId == python",
-          "group": "navigation"
-        },
-        {
-          "command": "senran.toStandardPy",
-          "when": "resourceLangId == python || resourceLangId == senran",
-          "group": "navigation"
-        },
-        {
-          "command": "senran.formatPianwen",
-          "when": "resourceLangId == python || resourceLangId == senran",
-          "group": "navigation"
         }
       ]
     },
@@ -124,7 +115,17 @@
         "language": "senran",
         "path": "./snippets/snippets.json"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "森蚺",
+      "properties": {
+        "senran.pythonPath": {
+          "type": "string",
+          "default": "python3",
+          "description": "已安裝 senran 的 Python 執行檔路徑。"
+        }
+      }
+    }
   },
   "repository": {
     "type": "git",

@@ -5,6 +5,15 @@
 
 ---
 
+右鍵保留三項轉換指令，編輯器頂端不放按鈕。轉換共用 Python 核心，
+請先以 Python 3.12 以上安裝此專案；若執行檔不叫 `python3`，在設定中填入
+`senran.pythonPath`。須取消局部選取，以完整文卷轉換並保留還原封卷。
+
+化俗為雅採整庫閱覽模式：已知名稱依詞典更名，未知名稱用可逆漢字代號，
+保留 Python 保留字、字串與註解。此模式須還原後執行，不宣稱直接執行任意文言化專案。
+在森蚺 Markdown 文卷上使用「化俗為雅」可解賦，使用「化雅為俗」可直接還原 Python。
+駢文中的完整碼卷是還原來源；修改碼卷時會拒絕無損還原，正文修辭不影響單卷解賦。
+
 ## 🌟 核心功能
 
 1. **智慧補全 (IntelliSense Auto-Completion)**：
@@ -30,7 +39,7 @@
 ```bash
 npx @vscode/vsce package
 ```
-即可產出 `senran-vscode-0.1.0.vsix`。
+即可產出 `senran-vscode-0.1.6.vsix`，內含與 README 相同的專案圖示。
 
 ### 2. 在 VSCode 中載入
 * 開啟 VSCode，按下 `Ctrl+Shift+P`（Mac 鍵為 `Cmd+Shift+P`）

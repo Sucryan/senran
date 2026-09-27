@@ -1,12 +1,42 @@
+<p align="center"><img src="assets/senran-icon.png" alt="森蚺圖徽" width="256"></p>
+
 # 🐍 森蚺 (Senran)
 
 > **「昔者伏羲作八卦以通神明之德，周公制禮樂而布九數之規。漢有《九章算術》，窮幽索微，為百代算法之宗；近世有高士作《周蟒》，始使華夏文字驅策西土靈機。今作『森蚺』，遠追《九章》之遺法，近承《周蟒》之宏願，以古雅文言驅策萬象西邦庫卷，海納百川，有容乃大。」**
 
 [![授權條款：MIT](https://img.shields.io/badge/授權-MIT-yellow.svg)](LICENSE)
-[![版本：Python 3.8+](https://img.shields.io/badge/法度-Python%203.8+-blue.svg)](https://www.python.org/)
-[![考校：皆備](https://img.shields.io/badge/考校-三十四試咸吉-brightgreen.svg)]()
+[![版本：Python 3.12+](https://img.shields.io/badge/法度-Python%203.12+-blue.svg)](https://www.python.org/)
+[![考校](https://img.shields.io/badge/考校-無損往返-brightgreen.svg)](#整庫無損轉錄)
 
 ---
+
+## 整庫無損轉錄
+
+整庫閱覽模式更名所有非保留字名稱：已知名稱取現有文言詞律，未知名稱取可逆漢字代號。
+Python 保留字、字串、註解、檔名及非 Python 資料不翻譯；此模式應還原後執行。
+`.pyx`、C、圖片與其他檔案原樣搬卷。Git 歷史不搬卷；保留一般檔案位元組、權限、連結與空目錄，
+不保證時間戳、硬連結關係或延伸屬性。Python 3.12 以上可辨識 f-string 內的名稱。
+
+```bash
+senran repo encode 原庫 森蚺庫
+senran repo format 森蚺庫 駢文庫
+senran repo unformat 駢文庫 解賦庫
+senran repo decode 解賦庫 還原庫
+```
+
+目的目錄須不存在，且不得與來源重疊。每次轉換保留名稱與編碼對照及校驗值，
+不暗藏原碼副本；駢文附完整森蚺碼卷供解賦。碼卷或清冊不符時停止，避免假稱完全還原。
+既有 `化雅()`／`senran input.py` 保留代理體入口，支援既有常用詞律，並加入逐字還原紀錄；
+代理體並不保證任意第三方程式的執行相容性。新產生的封卷可無損逆轉，舊式純駢文因缺少原碼須重新產生。
+
+參考專案與四界輸出分別放在 Git 忽略的 `examples/upstream/`、`examples/roundtrip/`：
+
+```bash
+python3 tools/verify_repositories.py --fetch
+```
+
+此考校固定每份來源的 Git 提交，逐檔比較位元組、權限、連結及目錄；不執行參考專案或其機器學習程式。
+VS Code 0.1.6 的右鍵指令共用同一轉錄核心，移除頂端按鈕；Markdown 上可解賦或直接還原 Python。
 
 ## 📜 稽首前修（致敬）
 
@@ -128,7 +158,8 @@ senran 策問 "我想訓練神經網路計算梯度"
 * ⚡ **通神符咒（Code Snippets）**：支援 `sr-init`（起手）、`sr-http`（雲端探訪）、`sr-torch`（深度神思）、`sr-file`（案牘卷宗）等一鍵展開。
 
 **一鍵載入法**：
-進入 VSCode 按下 `Ctrl+Shift+P` $\to$ 選取 `Extensions: Install from VSIX...` $\to$ 挑選 `vscode-extension/senran-vscode-0.1.5.vsix` 即可！
+先在 `vscode-extension/` 執行 `npx @vscode/vsce package` 產生安裝檔（Git 只收錄套件原始碼與圖示），
+進入 VSCode 按下 `Ctrl+Shift+P` $\to$ 選取 `Extensions: Install from VSIX...` $\to$ 挑選 `vscode-extension/senran-vscode-0.1.6.vsix` 即可！
 
 ---
 
@@ -356,12 +387,12 @@ for 輪 in 疇(1, 51):
 
 ## 🧪 考校明察（測試驗證）
 
-本卷內蘊三十四項法度考校，以驗算理之精微：
+Git 收錄轉錄、整庫搬卷與編輯器介面的考校，無須安裝或執行外邦機器學習庫：
 
 ```bash
 python3 -m unittest discover -s tests -v
 ```
-> 報曰：`Ran 34 tests ... OK`，諸法咸吉。
+> 須獲報 `OK`，且原碼與四界往返後之內容逐位元組相同。舊工作目錄中未收錄的額外考校不屬於此測試集。
 
 ---
 

@@ -11,11 +11,44 @@ from senran.resolver import resolve_attribute_name, suggest_available_attributes
 PRIMITIVE_TYPES = (int, float, bool, type(None), bytes, str)
 
 
-def 剖(obj: Any) -> Any:
+def _含代理(obj, seen=None):
+    if isinstance(obj, SenranProxy):
+        return True
+    if type(obj) not in (list, tuple, dict, set, frozenset):
+        return False
+    if seen is None:
+        seen = set()
+    if id(obj) in seen:
+        return False
+    seen.add(id(obj))
+    values = list(obj.keys()) + list(obj.values()) if type(obj) is dict else obj
+    return any(_含代理(value, seen) for value in values)
+
+
+def 剖(obj: Any, _memo=None) -> Any:
     """解開森蚺代理，取得底層原生 Python 物件"""
     if isinstance(obj, SenranProxy):
         return obj._target
-    return obj
+    if _memo is None:
+        _memo = {}
+    if id(obj) in _memo:
+        return _memo[id(obj)]
+    if not _含代理(obj):
+        return obj
+    if type(obj) is list:
+        result = []
+        _memo[id(obj)] = result
+        result.extend(剖(value, _memo) for value in obj)
+    elif type(obj) is dict:
+        result = {}
+        _memo[id(obj)] = result
+        result.update((剖(key, _memo), 剖(value, _memo)) for key, value in obj.items())
+    else:
+        result = type(obj)(剖(value, _memo) for value in obj)
+        if id(obj) in _memo:
+            return _memo[id(obj)]
+        _memo[id(obj)] = result
+    return result
 
 
 def _hook_torch_module():

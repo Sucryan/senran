@@ -7,6 +7,9 @@
 import ast
 import re
 import sys
+import json
+import warnings
+from senran.codec import digest
 from typing import List, Tuple, Optional
 
 
@@ -28,9 +31,20 @@ class PianwenFormatter(ast.NodeVisitor):
             "> 夫運籌於帷幄之中，決勝於方寸之間。",
             ""
         ]
-        tree = ast.parse(source_code)
-        for node in tree.body:
-            self.visit(node)
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', SyntaxWarning)
+                tree = ast.parse(source_code)
+                for node in tree.body:
+                    self.visit(node)
+        except (SyntaxError, ValueError, TypeError, SystemError, RecursionError):
+            self.lines = self.lines[:4]
+            self.emit('法度雖新，原卷悉存；循文可復，不失毫分。')
+        # 駢辭供閱覽，完整碼卷才是還原的唯一來源。
+        fence = '`' * max(3, 1 + max((len(run) for run in re.findall(r'`+', source_code)), default=0))
+        metadata = json.dumps({'length': len(source_code), 'hash': digest(source_code), 'fence': fence})
+        self.lines.extend(['', '<!-- senran-pianwen-v1 ' + metadata + ' -->',
+                           fence + 'python', source_code + '\n' + fence])
         self.lines.append("")
         self.lines.append("---")
         self.lines.append("*🪶【賦畢 · 算道咸吉】*")
@@ -161,126 +175,19 @@ def 解賦(駢文: str) -> str:
     """
     從駢儷賦體文章（.md / .sr）中還原出可執行之森蚺 Python 代碼。
     """
-    py_lines = [
-        "from senran import 引入, 書, 計, 疇, 總, 序, 錄, 譜, 若, 真, 假, 啟, 定",
-        ""
-    ]
-    lines = 駢文.split("\n")
-    indent = ""
-
-    for raw_line in lines:
-        line = raw_line.strip()
-        if not line or line.startswith("#") or line.startswith(">") or line.startswith("---") or line.startswith("*"):
-            continue
-
-        # 計算原本縮排
-        current_indent = raw_line[: len(raw_line) - len(raw_line.lstrip())]
-
-        # 1. 庫引入
-        m = re.search(r'引外邦「(.+?)」之庫，役使為「(.+?)」', line)
-        if m:
-            py_lines.append(f"{current_indent}{m.group(2)} = 引入('{m.group(1)}')")
-            continue
-
-        # 2. 引入森蚺或單一庫
-        m = re.search(r'引「(.+?)」之籍，恭請名品「(.+?)」', line)
-        if m:
-            py_lines.append(f"{current_indent}{m.group(2)} = 引入('{m.group(1)}')")
-            continue
-
-        # 3. 門類與方法定義
-        m = re.search(r'立宗為門類，號曰「(.+?)」', line)
-        if m:
-            py_lines.append(f"{current_indent}class {m.group(1)}:")
-            continue
-
-        if "門類大成，立基完備" in line:
-            continue
-
-        m = re.search(r'夫門類初立，溯源鑄形（初始化），納諸數「(.*?)」', line)
-        if m:
-            args = f"己, {m.group(1)}" if m.group(1).strip() else "己"
-            py_lines.append(f"{current_indent}def __init__({args}):")
-            continue
-
-        m = re.search(r'賦物之能，立此法度曰「(.+?)」，納客數「(.*?)」', line)
-        if m:
-            args = f"己, {m.group(2)}" if m.group(2).strip() else "己"
-            py_lines.append(f"{current_indent}def {m.group(1)}({args}):")
-            continue
-
-        m = re.search(r'立宗定法，名曰「(.+?)」，納客數「(.*?)」', line)
-        if m:
-            py_lines.append(f"{current_indent}def {m.group(1)}({m.group(2)}):")
-            continue
-
-        m = re.search(r'全功奏凱，以「(.+?)」歸報', line)
-        if m:
-            py_lines.append(f"{current_indent}return {m.group(1)}")
-            continue
-
-        # 4. 賦值與實例化
-        m = re.search(r'賦物之秉性，定「(.+?)」之值為「(.+?)」', line)
-        if m:
-            py_lines.append(f"{current_indent}{m.group(1)} = {m.group(2)}")
-            continue
-
-        m = re.search(r'鑄就實例，以「(.+?)」化生「(.+?)」', line)
-        if m:
-            py_lines.append(f"{current_indent}{m.group(2)} = {m.group(1)}")
-            continue
-
-        m = re.search(r'設符節曰「(.+?)」，權衡其理，賦其值曰「(.+?)」', line)
-        if m:
-            py_lines.append(f"{current_indent}{m.group(1)} = {m.group(2)}")
-            continue
-
-        m = re.search(r'遣驛使以往訪，運籌「(.+?)」，定卷為「(.+?)」', line)
-        if m:
-            py_lines.append(f"{current_indent}{m.group(2)} = {m.group(1)}")
-            continue
-
-        m = re.search(r'置百家之珍，引「(.+?)」入府，銘曰「(.+?)」', line)
-        if m:
-            py_lines.append(f"{current_indent}{m.group(2)} = 引入('{m.group(1)}')")
-            continue
-
-        # 5. 印出
-        m = re.search(r'几案展卷，落字有聲，明書其辭：(.+?)；', line)
-        if m:
-            py_lines.append(f"{current_indent}書({m.group(1)})")
-            continue
-
-        # 6. 反溯 / 清勢 / 步進
-        if "反溯求勢" in line:
-            py_lines.append(f"{current_indent}損.反溯()")
-            continue
-        if "蕩滌前勢" in line:
-            py_lines.append(f"{current_indent}優化客.清勢()")
-            continue
-        if "循梯度而步進" in line:
-            py_lines.append(f"{current_indent}優化客.步進()")
-            continue
-
-        # 7. 條件若則
-        m = re.search(r'若夫考校其理，審「(.+?)」符契而稱是：', line)
-        if m:
-            py_lines.append(f"{current_indent}if {m.group(1)}:")
-            continue
-        if "如其不然" in line:
-            py_lines.append(f"{current_indent}else:")
-            continue
-
-        # 8. 迴圈
-        m = re.search(r'循序週流，以「(.+?)」度「(.+?)」，往復而行：', line)
-        if m:
-            py_lines.append(f"{current_indent}for {m.group(1)} in {m.group(2)}:")
-            continue
-
-        # 9. 一般表達式調用
-        m = re.search(r'操持法印，施號發令：「(.+?)」；', line)
-        if m:
-            py_lines.append(f"{current_indent}{m.group(1)}")
-            continue
-
-    return "\n".join(py_lines)
+    marker = '<!-- senran-pianwen-v1 '
+    match = re.search(r'^<!-- senran-pianwen-v1 .* -->\n', 駢文, flags=re.MULTILINE)
+    if match:
+        position = match.start() + len(marker)
+        end = 駢文.index(' -->\n', position)
+        metadata = json.loads(駢文[position:end])
+        prefix = metadata['fence'] + 'python\n'
+        start = end + len(' -->\n')
+        if not 駢文.startswith(prefix, start):
+            raise ValueError('駢文原碼區塊遺失。')
+        start += len(prefix)
+        code = 駢文[start:start + metadata['length']]
+        if not 駢文.startswith('\n' + metadata['fence'], start + metadata['length']) or digest(code) != metadata['hash']:
+            raise ValueError('駢文碼卷已變更，不能逐字還原。')
+        return code
+    raise ValueError('此為舊式駢文，未含完整碼卷，不能無損還原。')

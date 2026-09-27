@@ -166,6 +166,11 @@ def 轉西文(文言代碼: str) -> str:
     """
     將森蚺文言代碼逆轉為標準西邦 Python 代碼。
     """
+    from senran.codec import decode_source
+    restored = decode_source(文言代碼)
+    if restored is not None:
+        return restored
+    # 舊式手寫代理體沒有原文紀錄；此路徑只提供詞律逆轉。
     # 處理 若().則().否則() 多行與單行轉為標準 if-else
     文言代碼 = re.sub(
         r"若\((.+?)\)\.則\(\s*lambda:\s*(.+?)\n\s*\)\.否則\(\s*lambda:\s*(.+?)\n\s*\)",
