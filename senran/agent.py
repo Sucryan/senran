@@ -91,16 +91,58 @@ REVERSE_TRANSCRIPTION_RULES = [
     (r"\.縱標\s*\(", ".ylabel("),
     (r"\.存圖\s*\(", ".savefig("),
     (r"\.展現\s*\(\s*\)", ".show()"),
+
+    # 物件導向、門類與自指逆轉 (OOP, Classes, Methods, self)
+    (r"\b己\.", "self."),
+    (r"\b己\b", "self"),
+    (r"\bclass\s+犬\b", "class Dog"),
+    (r"\b犬\b", "Dog"),
+    (r"\b犬一\b", "dog1"),
+    (r"\b犬二\b", "dog2"),
+    (r"\bclass\s+貓\b", "class Cat"),
+    (r"\b貓\b", "Cat"),
+    (r"\b貓一\b", "cat1"),
+    (r"\b貓二\b", "cat2"),
+    (r"\bclass\s+客\b", "class User"),
+    (r"\b客\b", "User"),
+    (r"\b客一\b", "user1"),
+    (r"\bdef\s+吠\b", "def bark"),
+    (r"\.吠\s*\(", ".bark("),
+    (r"\bdef\s+喵\b", "def meow"),
+    (r"\.喵\s*\(", ".meow("),
+    (r"\bdef\s+取_身世\b", "def get_info"),
+    (r"\.取_身世\s*\(", ".get_info("),
+    (r"\bdef\s+取_名\b", "def get_name"),
+    (r"\.取_名\s*\(", ".get_name("),
+    (r"\bdef\s+取_歲\b", "def get_age"),
+    (r"\.取_歲\s*\(", ".get_age("),
+    (r"\bdef\s+前向\b", "def forward"),
+    (r"\.前向\s*\(", ".forward("),
+    (r"\bdef\s+重開\b", "def reset"),
+    (r"\.重開\s*\(", ".reset("),
+    (r"def\s+__init__\s*\(\s*self\s*,\s*名\s*,\s*歲\s*\)", "def __init__(self, name, age)"),
+    (r"\bself\.名\s*=\s*名\b", "self.name = name"),
+    (r"\bself\.歲\s*=\s*歲\b", "self.age = age"),
+    (r"self\.名\b", "self.name"),
+    (r"self\.歲\b", "self.age"),
+    (r"\{self\.名\}", "{self.name}"),
+    (r"\{self\.歲\}", "{self.age}"),
+    (r"@定品\b", "@dataclass"),
 ]
 
 IMPORT_RESTORE_RULES = [
     (r"(\w+)\s*=\s*引入\(['\"]requests['\"]\)", r"import requests as \1"),
+    (r"(\w+)\s*=\s*引入\(['\"]httpx['\"]\)", r"import httpx as \1"),
+    (r"(\w+)\s*=\s*引入\(['\"]flask['\"]\)", r"import flask as \1"),
+    (r"(\w+)\s*=\s*引入\(['\"]fastapi['\"]\)", r"import fastapi as \1"),
+    (r"(\w+)\s*=\s*引入\(['\"]click['\"]\)", r"import click as \1"),
     (r"(\w+)\s*=\s*引入\(['\"]torch['\"]\)", r"import torch as \1"),
     (r"(\w+)\s*=\s*引入\(['\"]numpy['\"]\)", r"import numpy as \1"),
     (r"(\w+)\s*=\s*引入\(['\"]pandas['\"]\)", r"import pandas as \1"),
     (r"(\w+)\s*=\s*引入\(['\"]sqlite3['\"]\)", r"import sqlite3 as \1"),
     (r"(\w+)\s*=\s*引入\(['\"]json['\"]\)", r"import json as \1"),
     (r"(\w+)\s*=\s*引入\(['\"]math['\"]\)", r"import math as \1"),
+    (r"from\s+dataclasses\s+import\s+dataclass\s+as\s+定品", "from dataclasses import dataclass"),
     (r"(\w+)\s*=\s*引入\(['\"]matplotlib\.pyplot['\"]\)", r"import matplotlib.pyplot as \1"),
     (r"(\w+)\s*=\s*引入\(['\"](.+?)['\"]\)", r"import \2 as \1"),
 ]
@@ -112,6 +154,21 @@ def 轉西文(文言代碼: str) -> str:
     """
     lines = 文言代碼.split("\n")
     new_lines = []
+    alias_map = {}
+
+    DEFAULT_ALIASES = {
+        "requests": "求",
+        "httpx": "求",
+        "flask": "法宴",
+        "fastapi": "急驛",
+        "click": "號令",
+        "torch": "神算",
+        "numpy": "算矩",
+        "pandas": "史冊",
+        "sqlite3": "庫",
+        "json": "法書",
+        "math": "算術",
+    }
 
     for line in lines:
         stripped = line.strip()
@@ -121,11 +178,26 @@ def 轉西文(文言代碼: str) -> str:
 
         matched = False
         for pattern, repl in IMPORT_RESTORE_RULES:
-            if re.match(pattern, stripped):
+            m_imp = re.match(pattern, stripped)
+            if m_imp:
                 indent = line[: len(line) - len(line.lstrip())]
+                var_name = m_imp.group(1) if m_imp.groups() else ""
+                mod_name = m_imp.group(2) if len(m_imp.groups()) >= 2 else ""
+
+                # 判定是否為庫之預設雅稱
+                for mod_k, alias_v in DEFAULT_ALIASES.items():
+                    if f"'{mod_k}'" in stripped or f'"{mod_k}"' in stripped:
+                        if var_name == alias_v or var_name == mod_k:
+                            alias_map[alias_v] = mod_k
+                            new_lines.append(f"{indent}import {mod_k}")
+                            matched = True
+                            break
+                if matched:
+                    break
+
                 restored = re.sub(pattern, repl, stripped)
                 # 清理如 import requests as requests -> import requests
-                m = re.match(r"import\s+(\w+)\s+as\s+\1", restored)
+                m = re.match(r"import\s+([\w\.]+)\s+as\s+\1$", restored)
                 if m:
                     restored = f"import {m.group(1)}"
                 new_lines.append(indent + restored)
@@ -135,7 +207,17 @@ def 轉西文(文言代碼: str) -> str:
         if not matched:
             new_lines.append(line)
 
-    結果 = "\n".join(new_lines)
+    replaced_lines = []
+    for line in new_lines:
+        stripped = line.strip()
+        if stripped.startswith(("import ", "from ")):
+            replaced_lines.append(line)
+        else:
+            for orig_var, new_var in alias_map.items():
+                line = re.sub(r"\b" + orig_var + r"\.", new_var + ".", line)
+            replaced_lines.append(line)
+
+    結果 = "\n".join(replaced_lines)
 
     for pattern, repl in REVERSE_TRANSCRIPTION_RULES:
         結果 = re.sub(pattern, repl, 結果)

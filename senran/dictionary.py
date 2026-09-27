@@ -146,7 +146,32 @@ NOUNS: Dict[str, str] = {
     "誤": "error",
     "信": "message",
     "訊": "info",
+    "身世": "info",
+    "詳情": "info",
+    "資訊": "info",
     "告": "warning",
+
+    # 生靈與物件實體 (OOP & Domain Entities)
+    "犬": "dog",
+    "狗": "dog",
+    "貓": "cat",
+    "生靈": "animal",
+    "人": "person",
+    "客": "user",
+    "名": "name",
+    "歲": "age",
+    "年歲": "age",
+    "吠": "bark",
+    "會晤": "session",
+    "司理": "app",
+    "客端": "client",
+    "伺端": "server",
+    "模型": "model",
+    "注意力": "attention",
+    "賞": "reward",
+    "策": "action",
+    "景": "obs",
+    "終": "done",
 
     # 數據科學與結構 (numpy, pandas, torch...)
     "形": "shape",
@@ -390,6 +415,12 @@ SYNONYMS: Dict[str, List[str]] = {
     "勢": ["grad", "slope"],
     "梯度": ["grad"],
     "考分": ["score", "evaluate"],
+    "身世": ["get_info", "info"],
+    "詳情": ["get_info", "info"],
+    "吠": ["bark"],
+    "犬": ["dog"],
+    "狗": ["dog"],
+    "歲": ["age"],
 }
 
 # 反向查詢表 (用於偵錯與提示：English -> [Chinese aliases])

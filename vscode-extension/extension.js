@@ -679,12 +679,54 @@ const TRANSCRIPTION_RULES = [
   [/\.xlabel\s*\(/g, ".橫標("],
   [/\.ylabel\s*\(/g, ".縱標("],
   [/\.savefig\s*\(/g, ".存圖("],
-  [/\.show\s*\(\s*\)/g, ".展現()"]
+  [/\.show\s*\(\s*\)/g, ".展現()"],
+
+  // 8. 物件導向、門類與自指 (OOP, Classes, Methods, self)
+  [/\bself\./g, "己."],
+  [/\bself\b/g, "己"],
+  [/\bclass\s+Dog\b/g, "class 犬"],
+  [/\bDog\b/g, "犬"],
+  [/\bdog1\b/g, "犬一"],
+  [/\bdog2\b/g, "犬二"],
+  [/\bclass\s+Cat\b/g, "class 貓"],
+  [/\bCat\b/g, "貓"],
+  [/\bcat1\b/g, "貓一"],
+  [/\bcat2\b/g, "貓二"],
+  [/\bclass\s+User\b/g, "class 客"],
+  [/\bUser\b/g, "客"],
+  [/\buser1\b/g, "客一"],
+  [/\bdef\s+bark\b/g, "def 吠"],
+  [/\.bark\s*\(/g, ".吠("],
+  [/\bdef\s+meow\b/g, "def 喵"],
+  [/\.meow\s*\(/g, ".喵("],
+  [/\bdef\s+get_info\b/g, "def 取_身世"],
+  [/\.get_info\s*\(/g, ".取_身世("],
+  [/\bdef\s+get_name\b/g, "def 取_名"],
+  [/\.get_name\s*\(/g, ".取_名("],
+  [/\bdef\s+get_age\b/g, "def 取_歲"],
+  [/\.get_age\s*\(/g, ".取_歲("],
+  [/\bdef\s+forward\b/g, "def 前向"],
+  [/\.forward\s*\(/g, ".前向("],
+  [/\bdef\s+reset\b/g, "def 重開"],
+  [/\.reset\s*\(/g, ".重開("],
+  [/def\s+__init__\s*\(\s*己\s*,\s*name\s*,\s*age\s*\)/g, "def __init__(己, 名, 歲)"],
+  [/己\.name\b/g, "己.名"],
+  [/己\.age\b/g, "己.歲"],
+  [/\{己\.name\}/g, "{己.名}"],
+  [/\{己\.age\}/g, "{己.歲}"]
 ];
 
 const IMPORT_RULES = [
   [/^import\s+requests\s+as\s+(\w+)/, (m, p1) => `${p1} = 引入('requests')`],
   [/^import\s+requests\b/, () => "求 = 引入('requests')"],
+  [/^import\s+httpx\s+as\s+(\w+)/, (m, p1) => `${p1} = 引入('httpx')`],
+  [/^import\s+httpx\b/, () => "求 = 引入('httpx')"],
+  [/^import\s+flask\s+as\s+(\w+)/, (m, p1) => `${p1} = 引入('flask')`],
+  [/^import\s+flask\b/, () => "法宴 = 引入('flask')"],
+  [/^import\s+fastapi\s+as\s+(\w+)/, (m, p1) => `${p1} = 引入('fastapi')`],
+  [/^import\s+fastapi\b/, () => "急驛 = 引入('fastapi')"],
+  [/^import\s+click\s+as\s+(\w+)/, (m, p1) => `${p1} = 引入('click')`],
+  [/^import\s+click\b/, () => "號令 = 引入('click')"],
   [/^import\s+numpy\s+as\s+(\w+)/, (m, p1) => `${p1} = 引入('numpy')`],
   [/^import\s+numpy\b/, () => "算矩 = 引入('numpy')"],
   [/^import\s+pandas\s+as\s+(\w+)/, (m, p1) => `${p1} = 引入('pandas')`],
@@ -697,6 +739,8 @@ const IMPORT_RULES = [
   [/^import\s+json\b/, () => "法書 = 引入('json')"],
   [/^import\s+math\s+as\s+(\w+)/, (m, p1) => `${p1} = 引入('math')`],
   [/^import\s+math\b/, () => "算術 = 引入('math')"],
+  [/^from\s+dataclasses\s+import\s+dataclass/, () => "from dataclasses import dataclass as 定品"],
+  [/^@dataclass\b/, () => "@定品"],
   [/^import\s+(\w+)\s+as\s+(\w+)/, (m, p1, p2) => `${p2} = 引入('${p1}')`],
   [/^import\s+(\w+)\b/, (m, p1) => `${p1} = 引入('${p1}')`]
 ];
@@ -826,6 +870,55 @@ function formatToPianwen(code) {
       continue;
     }
 
+    // 門類 Class
+    m = line.match(/^class\s+(\w+)(?:\((.*?)\))?:$/);
+    if (m) {
+      let baseStr = m[2] ? `，承襲「${m[2]}」之風規` : "，自成一家";
+      pianwenLines.push(`${indent}立宗為門類，號曰「${m[1]}」${baseStr}：`);
+      continue;
+    }
+
+    // 建構子與方法
+    m = line.match(/^def\s+__init__\s*\(\s*(?:self|己)(?:,\s*(.+?))?\s*\):$/);
+    if (m) {
+      let argsStr = m[1] || "";
+      pianwenLines.push(`${indent}夫門類初立，溯源鑄形（初始化），納諸數「${argsStr}」：`);
+      continue;
+    }
+
+    m = line.match(/^def\s+(\w+)\s*\(\s*(?:self|己)(?:,\s*(.+?))?\s*\):$/);
+    if (m) {
+      let argsStr = m[2] || "";
+      pianwenLines.push(`${indent}賦物之能，立此法度曰「${m[1]}」，納客數「${argsStr}」：`);
+      continue;
+    }
+
+    m = line.match(/^def\s+(\w+)\s*\((.*?)\):$/);
+    if (m) {
+      pianwenLines.push(`${indent}立宗定法，名曰「${m[1]}」，納客數「${m[2]}」：`);
+      continue;
+    }
+
+    m = line.match(/^return\s+(.+)$/);
+    if (m) {
+      pianwenLines.push(`${indent}全功奏凱，以「${m[1]}」歸報；`);
+      continue;
+    }
+
+    // 屬性賦值
+    m = line.match(/^(?:self|己)\.(\w+)\s*=\s*(.+)$/);
+    if (m) {
+      pianwenLines.push(`${indent}賦物之秉性，定「己.${m[1]}」之值為「${m[2]}」；`);
+      continue;
+    }
+
+    // 實例化
+    m = line.match(/^(\w+)\s*=\s*([A-Z\u4e00-\u9fa5]\w*)\((.*)\)$/);
+    if (m) {
+      pianwenLines.push(`${indent}鑄就實例，以「${m[2]}(${m[3]})」化生「${m[1]}」；`);
+      continue;
+    }
+
     // 7. 賦值
     m = line.match(/^(\w+)\s*=\s*(.+)$/);
     if (m) {
@@ -913,11 +1006,51 @@ const REVERSE_TRANSCRIPTION_RULES = [
   [/\.橫標\s*\(/g, ".xlabel("],
   [/\.縱標\s*\(/g, ".ylabel("],
   [/\.存圖\s*\(/g, ".savefig("],
-  [/\.展現\s*\(\s*\)/g, ".show()"]
+  [/\.展現\s*\(\s*\)/g, ".show()"],
+
+  // 物件導向、門類與自指逆轉 (OOP, Classes, Methods, self)
+  [/\b己\./g, "self."],
+  [/\b己\b/g, "self"],
+  [/\bclass\s+犬\b/g, "class Dog"],
+  [/\b犬\b/g, "Dog"],
+  [/\b犬一\b/g, "dog1"],
+  [/\b犬二\b/g, "dog2"],
+  [/\bclass\s+貓\b/g, "class Cat"],
+  [/\b貓\b/g, "Cat"],
+  [/\b貓一\b/g, "cat1"],
+  [/\b貓二\b/g, "cat2"],
+  [/\bclass\s+客\b/g, "class User"],
+  [/\b客\b/g, "User"],
+  [/\b客一\b/g, "user1"],
+  [/\bdef\s+吠\b/g, "def bark"],
+  [/\.吠\s*\(/g, ".bark("],
+  [/\bdef\s+喵\b/g, "def meow"],
+  [/\.喵\s*\(/g, ".meow("],
+  [/\bdef\s+取_身世\b/g, "def get_info"],
+  [/\.取_身世\s*\(/g, ".get_info("],
+  [/\bdef\s+取_名\b/g, "def get_name"],
+  [/\.取_名\s*\(/g, ".get_name("],
+  [/\bdef\s+取_歲\b/g, "def get_age"],
+  [/\.取_歲\s*\(/g, ".get_age("],
+  [/\bdef\s+前向\b/g, "def forward"],
+  [/\.前向\s*\(/g, ".forward("],
+  [/\bdef\s+重開\b/g, "def reset"],
+  [/\.重開\s*\(/g, ".reset("],
+  [/def\s+__init__\s*\(\s*self\s*,\s*名\s*,\s*歲\s*\)/g, "def __init__(self, name, age)"],
+  [/self\.名\b/g, "self.name"],
+  [/self\.歲\b/g, "self.age"],
+  [/\{self\.名\}/g, "{self.name}"],
+  [/\{self\.歲\}/g, "{self.age}"],
+  [/@定品\b/g, "@dataclass"]
 ];
 
 const REVERSE_IMPORT_RULES = [
   [/^(\w+)\s*=\s*引入\(['"]requests['"]\)/, (m, p1) => (p1 === 'requests' || p1 === '求') ? 'import requests' : `import requests as ${p1}`],
+  [/^(\w+)\s*=\s*引入\(['"]httpx['"]\)/, (m, p1) => (p1 === 'httpx' || p1 === '疾求') ? 'import httpx' : `import httpx as ${p1}`],
+  [/^(\w+)\s*=\s*引入\(['"]flask['"]\)/, (m, p1) => (p1 === 'flask' || p1 === '壇') ? 'import flask' : `import flask as ${p1}`],
+  [/^(\w+)\s*=\s*引入\(['"]fastapi['"]\)/, (m, p1) => (p1 === 'fastapi' || p1 === '疾驛') ? 'import fastapi' : `import fastapi as ${p1}`],
+  [/^(\w+)\s*=\s*引入\(['"]click['"]\)/, (m, p1) => (p1 === 'click' || p1 === '敕令') ? 'import click' : `import click as ${p1}`],
+  [/^from\s+dataclasses\s+import\s+dataclass\s+as\s+定品/, () => 'from dataclasses import dataclass'],
   [/^(\w+)\s*=\s*引入\(['"]torch['"]\)/, (m, p1) => (p1 === 'torch' || p1 === '神算') ? 'import torch' : `import torch as ${p1}`],
   [/^(\w+)\s*=\s*引入\(['"]numpy['"]\)/, (m, p1) => (p1 === 'numpy' || p1 === '算矩') ? 'import numpy' : `import numpy as ${p1}`],
   [/^(\w+)\s*=\s*引入\(['"]pandas['"]\)/, (m, p1) => (p1 === 'pandas' || p1 === '史冊') ? 'import pandas' : `import pandas as ${p1}`],
@@ -943,6 +1076,10 @@ function reverseTranscribeCode(code) {
     for (let [pattern, repl] of REVERSE_IMPORT_RULES) {
       if (pattern.test(trimmed)) {
         if (/^求\s*=/.test(trimmed)) aliasMap["求"] = "requests";
+        if (/^疾求\s*=/.test(trimmed)) aliasMap["疾求"] = "httpx";
+        if (/^壇\s*=/.test(trimmed)) aliasMap["壇"] = "flask";
+        if (/^疾驛\s*=/.test(trimmed)) aliasMap["疾驛"] = "fastapi";
+        if (/^敕令\s*=/.test(trimmed)) aliasMap["敕令"] = "click";
         if (/^神算\s*=/.test(trimmed)) aliasMap["神算"] = "torch";
         if (/^算矩\s*=/.test(trimmed)) aliasMap["算矩"] = "numpy";
         if (/^史冊\s*=/.test(trimmed)) aliasMap["史冊"] = "pandas";

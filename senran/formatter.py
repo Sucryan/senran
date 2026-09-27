@@ -62,6 +62,10 @@ class PianwenFormatter(ast.NodeVisitor):
             self.emit(f"遣驛使以往訪，運籌「{value_str}」，定卷為「{targets}」；")
         elif "量(" in value_str or "tensor(" in value_str:
             self.emit(f"布列玄機張量，化萬物之精，鑄「{targets}」之形；")
+        elif targets.startswith("self.") or targets.startswith("己."):
+            self.emit(f"賦物之秉性，定「{targets}」之值為「{value_str}」；")
+        elif isinstance(node.value, ast.Call):
+            self.emit(f"鑄就實例，以「{value_str}」化生「{targets}」；")
         else:
             self.emit(f"設符節曰「{targets}」，權衡其理，賦其值曰「{value_str}」；")
 
@@ -102,9 +106,42 @@ class PianwenFormatter(ast.NodeVisitor):
             self.visit(sub_node)
         self.indent_level -= 1
 
+    def visit_ClassDef(self, node: ast.ClassDef):
+        bases_str = "、".join([ast.unparse(b) for b in node.bases])
+        if bases_str:
+            self.emit(f"立宗為門類，號曰「{node.name}」，承襲「{bases_str}」之道統：")
+        else:
+            self.emit(f"立宗為門類，號曰「{node.name}」，自成一家：")
+        self.indent_level += 1
+        for sub_node in node.body:
+            self.visit(sub_node)
+        self.indent_level -= 1
+        self.emit(f"「{node.name}」門類大成，立基完備。")
+        self.emit("")
+
     def visit_FunctionDef(self, node: ast.FunctionDef):
+        for dec in node.decorator_list:
+            self.emit(f"冠以靈飾，受令於「{ast.unparse(dec)}」：")
+        args = [a.arg for a in node.args.args]
+        if args and args[0] in ("self", "己"):
+            other_args = ", ".join(args[1:])
+            if node.name == "__init__":
+                self.emit(f"夫門類初立，溯源鑄形（初始化），納諸數「{other_args}」：")
+            else:
+                self.emit(f"賦物之能，立此法度曰「{node.name}」，納客數「{other_args}」：")
+        else:
+            args_str = ", ".join(args)
+            self.emit(f"立宗定法，名曰「{node.name}」，納客數「{args_str}」：")
+        self.indent_level += 1
+        for sub_node in node.body:
+            self.visit(sub_node)
+        self.indent_level -= 1
+
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef):
+        for dec in node.decorator_list:
+            self.emit(f"冠以靈飾，受令於「{ast.unparse(dec)}」：")
         args_str = ", ".join([a.arg for a in node.args.args])
-        self.emit(f"立宗定法，名曰「{node.name}」，納客數「{args_str}」：")
+        self.emit(f"立非同步玄機之法，名曰「{node.name}」，納客數「{args_str}」：")
         self.indent_level += 1
         for sub_node in node.body:
             self.visit(sub_node)
@@ -112,7 +149,7 @@ class PianwenFormatter(ast.NodeVisitor):
 
     def visit_Return(self, node: ast.Return):
         val = ast.unparse(node.value) if node.value else "空"
-        self.emit(f"全功奏凱，以「{val}」歸報主公；")
+        self.emit(f"全功奏凱，以「{val}」歸報；")
 
 
 def 賦體(代碼: str) -> str:
@@ -151,7 +188,48 @@ def 解賦(駢文: str) -> str:
             py_lines.append(f"{current_indent}{m.group(2)} = 引入('{m.group(1)}')")
             continue
 
-        # 3. 賦值
+        # 3. 門類與方法定義
+        m = re.search(r'立宗為門類，號曰「(.+?)」', line)
+        if m:
+            py_lines.append(f"{current_indent}class {m.group(1)}:")
+            continue
+
+        if "門類大成，立基完備" in line:
+            continue
+
+        m = re.search(r'夫門類初立，溯源鑄形（初始化），納諸數「(.*?)」', line)
+        if m:
+            args = f"己, {m.group(1)}" if m.group(1).strip() else "己"
+            py_lines.append(f"{current_indent}def __init__({args}):")
+            continue
+
+        m = re.search(r'賦物之能，立此法度曰「(.+?)」，納客數「(.*?)」', line)
+        if m:
+            args = f"己, {m.group(2)}" if m.group(2).strip() else "己"
+            py_lines.append(f"{current_indent}def {m.group(1)}({args}):")
+            continue
+
+        m = re.search(r'立宗定法，名曰「(.+?)」，納客數「(.*?)」', line)
+        if m:
+            py_lines.append(f"{current_indent}def {m.group(1)}({m.group(2)}):")
+            continue
+
+        m = re.search(r'全功奏凱，以「(.+?)」歸報', line)
+        if m:
+            py_lines.append(f"{current_indent}return {m.group(1)}")
+            continue
+
+        # 4. 賦值與實例化
+        m = re.search(r'賦物之秉性，定「(.+?)」之值為「(.+?)」', line)
+        if m:
+            py_lines.append(f"{current_indent}{m.group(1)} = {m.group(2)}")
+            continue
+
+        m = re.search(r'鑄就實例，以「(.+?)」化生「(.+?)」', line)
+        if m:
+            py_lines.append(f"{current_indent}{m.group(2)} = {m.group(1)}")
+            continue
+
         m = re.search(r'設符節曰「(.+?)」，權衡其理，賦其值曰「(.+?)」', line)
         if m:
             py_lines.append(f"{current_indent}{m.group(1)} = {m.group(2)}")
@@ -167,13 +245,13 @@ def 解賦(駢文: str) -> str:
             py_lines.append(f"{current_indent}{m.group(2)} = 引入('{m.group(1)}')")
             continue
 
-        # 4. 印出
+        # 5. 印出
         m = re.search(r'几案展卷，落字有聲，明書其辭：(.+?)；', line)
         if m:
             py_lines.append(f"{current_indent}書({m.group(1)})")
             continue
 
-        # 5. 反溯 / 清勢 / 步進
+        # 6. 反溯 / 清勢 / 步進
         if "反溯求勢" in line:
             py_lines.append(f"{current_indent}損.反溯()")
             continue
@@ -184,7 +262,7 @@ def 解賦(駢文: str) -> str:
             py_lines.append(f"{current_indent}優化客.步進()")
             continue
 
-        # 6. 條件若則
+        # 7. 條件若則
         m = re.search(r'若夫考校其理，審「(.+?)」符契而稱是：', line)
         if m:
             py_lines.append(f"{current_indent}if {m.group(1)}:")
@@ -193,13 +271,13 @@ def 解賦(駢文: str) -> str:
             py_lines.append(f"{current_indent}else:")
             continue
 
-        # 7. 迴圈
+        # 8. 迴圈
         m = re.search(r'循序週流，以「(.+?)」度「(.+?)」，往復而行：', line)
         if m:
             py_lines.append(f"{current_indent}for {m.group(1)} in {m.group(2)}:")
             continue
 
-        # 8. 一般表達式調用
+        # 9. 一般表達式調用
         m = re.search(r'操持法印，施號發令：「(.+?)」；', line)
         if m:
             py_lines.append(f"{current_indent}{m.group(1)}")

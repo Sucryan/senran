@@ -18,12 +18,30 @@ def 剖(obj: Any) -> Any:
     return obj
 
 
+def _hook_torch_module():
+    try:
+        import sys
+        if "torch" in sys.modules or "torch.nn" in sys.modules:
+            import torch.nn as nn
+            if hasattr(nn.Module, "forward") and not getattr(nn.Module.forward, "_senran_hooked", False):
+                orig_forward = nn.Module.forward
+                def _senran_forward(self, *args, **kwargs):
+                    if hasattr(self, "前向") and type(self).前向 is not _senran_forward:
+                        return self.前向(*args, **kwargs)
+                    return orig_forward(self, *args, **kwargs)
+                _senran_forward._senran_hooked = True
+                nn.Module.forward = _senran_forward
+    except Exception:
+        pass
+
+
 def 裹(obj: Any) -> Any:
     """將原生 Python 物件裹入森蚺代理（基礎型別除外）"""
     if isinstance(obj, SenranProxy):
         return obj
     if isinstance(obj, PRIMITIVE_TYPES):
         return obj
+    _hook_torch_module()
     return SenranProxy(obj)
 
 
@@ -38,6 +56,10 @@ class SenranProxy:
     def __init__(self, target: Any):
         # 避免遞迴調用 __setattr__
         object.__setattr__(self, "_target", 剖(target))
+
+    def __mro_entries__(self, bases):
+        """PEP 560 支援：允許代理類別直接被子類別繼承 (如 class FeedForward(nn.Module))"""
+        return (self._target,) if isinstance(self._target, type) else ()
 
     @property
     def 本(self) -> Any:
@@ -59,6 +81,9 @@ class SenranProxy:
 
         if resolved_name is not None:
             attr = getattr(target, resolved_name)
+            # 若為類別（type），包裝為代理並支援 PEP 560 繼承與實例包裝
+            if isinstance(attr, type):
+                return 裹(attr)
             # 若為可調用之函數/方法，包裝並轉發
             if callable(attr):
                 return self._wrap_callable(attr)
@@ -100,6 +125,16 @@ class SenranProxy:
         unwrapped_kwargs = {k: 剖(v) for k, v in kwargs.items()}
         result = target(*unwrapped_args, **unwrapped_kwargs)
         return 裹(result)
+
+    @classmethod
+    def __torch_function__(cls, func, types, args=(), kwargs=None):
+        """支援 PyTorch 算子分發，使代理張量能無縫進入神經網路模型 (如 Sequential/Linear)"""
+        if kwargs is None:
+            kwargs = {}
+        unwrapped_args = tuple(剖(a) for a in args)
+        unwrapped_kwargs = {k: 剖(v) for k, v in kwargs.items()}
+        res = func(*unwrapped_args, **unwrapped_kwargs)
+        return 裹(res)
 
     # ---------------- 運算符與容器行為 ----------------
     def __getitem__(self, item: Any) -> Any:

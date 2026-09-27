@@ -40,6 +40,8 @@ examples/test.py
 .DS_Store
 *.swp
 
-# Internal Rules
+# Internal Rules & Local Exclusions
 rules.md
+tests/
+examples/canonical/
 
