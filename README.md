@@ -4,7 +4,7 @@
 
 [![授權條款：MIT](https://img.shields.io/badge/授權-MIT-yellow.svg)](LICENSE)
 [![版本：Python 3.8+](https://img.shields.io/badge/法度-Python%203.8+-blue.svg)](https://www.python.org/)
-[![考校：皆備](https://img.shields.io/badge/考校-三十試咸吉-brightgreen.svg)]()
+[![考校：皆備](https://img.shields.io/badge/考校-三十一試咸吉-brightgreen.svg)]()
 
 ---
 
@@ -45,6 +45,7 @@ pip install -e .
 
 為使諸位學士操鍵如撫琴、落字皆雅言，專案隨附 **VSCode 專屬智囊套件**（位於 `vscode-extension/`）：
 
+* 🔤 **西邦之言自動提雅**：凡檔案載入森蚺（`from senran import ...`），鍵入習慣之英文（如 `print`、`len`、`status_code`、`backward`），下拉選單即自動於首位推舉對應古雅文言（`書`、`計`、`格`、`反溯`）！
 * ✨ **落字成章（智慧自動補全）**：輸入漢字或拼音（如鍵入 `shu` 提示 `書`、`fansu` 提示 `反溯`、`liang` 提示 `量`），自動帶出底層 Python 原語註釋。
 * 📜 **懸停解經（Hover Tooltips）**：滑鼠移至任一文言字詞，即刻顯現古典註解、Python 原語對照與用法範例。
 * ⚡ **通神符咒（Code Snippets）**：支援 `sr-init`（起手）、`sr-http`（雲端探訪）、`sr-torch`（深度神思）、`sr-file`（案牘卷宗）等一鍵展開。
@@ -63,6 +64,34 @@ pip install -e .
   ```bash
   # 直接轉錄並存為新檔
   senran input.py -o refined.py
+  ```
+
+---
+
+### 🪶 聲律風骨：四六駢儷格式化儀（Pianwen Formatter `.sr`）
+
+森蚺之格式化，非僅縮排空格之小巧，乃**將代碼排版為四六對仗、聲律清朗之駢儷賦體文章（.sr 卷帙）**！
+
+```wenyan
+# ─── 📜【森蚺駢儷憲典 · 賦體卷】───
+# 夫運籌於帷幄之中，決勝於方寸之間。
+
+置百家之珍，引「requests」入府，銘曰「求」；
+遣驛使以往訪，運籌「求.得('https://httpbin.org/get')」，定卷為「報」；
+若夫考校其理，審「報.格 == 200」符契而稱是：
+    几案展卷，落字有聲，明書其辭：'功成：', 報.文[:20]；
+
+# ─── 🪶【賦畢 · 算道咸吉】───
+```
+
+* 📜 **VSCode 一鍵排賦**：按右鍵點選 **「📜 森蚺：賦體排版（化為 .sr 駢儷文章）」**（快捷鍵 `Ctrl+Alt+P` / Mac `Cmd+Alt+P`），即刻在側窗展卷朗閱！
+* 💻 **終端轉賦與吟詠執行**：
+  ```bash
+  # 1. 將 Python 排版為 .sr 駢文
+  senran format input.py -o poem.sr
+
+  # 2. 直接吟詠執行 .sr 駢文卷帙！
+  senran run poem.sr
   ```
 
 ---

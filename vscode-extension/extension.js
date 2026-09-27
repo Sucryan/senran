@@ -462,7 +462,10 @@ function activate(context) {
     ['python', 'senran'],
     {
       provideCompletionItems(document, position) {
-        return LEXICON.map(item => {
+        const docText = document.getText();
+        const hasSenran = docText.includes('senran') || docText.includes('引入') || docText.includes('書');
+
+        const items = LEXICON.map(item => {
           const comp = new vscode.CompletionItem(item.name, item.kind);
           comp.detail = `[森蚺] ${item.py}`;
           // 支援 繁體中文、注音、英文字母
@@ -477,6 +480,30 @@ function activate(context) {
           
           return comp;
         });
+
+        // 若檔案中有 import senran，啟用「西邦之言自動提雅」：
+        // 當使用者習慣性輸入英文（如 print, len, status_code, backward）時，自動推舉文言！
+        if (hasSenran) {
+          for (let item of LEXICON) {
+            if (item.en) {
+              const enKeywords = item.en.split(' ');
+              for (let enKey of enKeywords) {
+                if (!enKey || enKey.length < 2) continue;
+                const enComp = new vscode.CompletionItem(`${item.name} (${enKey})`, item.kind);
+                enComp.insertText = item.name;
+                enComp.detail = `[森蚺提雅] 替代 ${enKey} ➜ ${item.name}`;
+                enComp.filterText = enKey;
+                enComp.sortText = `00_${enKey}`;
+                enComp.documentation = new vscode.MarkdownString(
+                  `**西邦俗語**：\`${enKey}\` ➜ **森蚺雅言**：\`${item.name}\`\n\n${item.desc}`
+                );
+                items.push(enComp);
+              }
+            }
+          }
+        }
+
+        return items;
       }
     },
     '.', ' ', ''
@@ -518,10 +545,8 @@ function activate(context) {
     const document = editor.document;
     const selection = editor.selection;
 
-    // 若有圈選部分代碼，僅轉錄圈選處；否則全篇轉錄
     const isSelection = !selection.isEmpty;
     const textToConvert = isSelection ? document.getText(selection) : document.getText();
-
     const transcribed = transcribeCode(textToConvert);
 
     await editor.edit(editBuilder => {
@@ -539,7 +564,28 @@ function activate(context) {
     vscode.window.showInformationMessage('🐍【森蚺】化俗為雅大成！已將代碼轉錄為古雅文言。');
   });
 
-  context.subscriptions.push(completionProvider, hoverProvider, transcribeCommand);
+  // 4. 賦體排版（化為 .sr 駢儷賦體文章）
+  const formatPianwenCommand = vscode.commands.registerCommand('senran.formatPianwen', async () => {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      vscode.window.showWarningMessage('【森蚺】未得開啟中之文卷。');
+      return;
+    }
+
+    const document = editor.document;
+    const text = document.getText();
+    const pianwen = formatToPianwen(text);
+
+    // 於右側開啟新視窗展現 .sr 駢文
+    const newDoc = await vscode.workspace.openTextDocument({
+      content: pianwen,
+      language: 'senran'
+    });
+    await vscode.window.showTextDocument(newDoc, vscode.ViewColumn.Beside);
+    vscode.window.showInformationMessage('📜【森蚺】賦體卷帙排印大成！已於側几展卷。');
+  });
+
+  context.subscriptions.push(completionProvider, hoverProvider, transcribeCommand, formatPianwenCommand);
 }
 
 // 轉錄詞律規則
@@ -668,6 +714,101 @@ function transcribeCode(code) {
   }
 
   return result;
+}
+
+// 駢文賦體排版轉換器
+function formatToPianwen(code) {
+  const lines = code.split("\n");
+  const pianwenLines = [
+    "# ─── 📜【森蚺駢儷憲典 · 賦體卷】───",
+    "# 夫運籌於帷幄之中，決勝於方寸之間。",
+    ""
+  ];
+
+  for (let rawLine of lines) {
+    let line = rawLine.trim();
+    if (!line || line.startsWith("#")) continue;
+
+    let indent = rawLine.slice(0, rawLine.length - rawLine.trimStart().length);
+
+    // 1. Import
+    let m = line.match(/^from\s+senran\s+import\s+(.+)$/);
+    if (m) {
+      pianwenLines.push(`${indent}先啟森蚺道統，恭請符節「${m[1].replace(/,\s*/g, '、')}」入列几案；`);
+      continue;
+    }
+    m = line.match(/^(\w+)\s*=\s*引入\(['"](.+?)['"]\)$/);
+    if (m) {
+      pianwenLines.push(`${indent}置百家之珍，引「${m[2]}」入府，銘曰「${m[1]}」；`);
+      continue;
+    }
+    m = line.match(/^import\s+(\w+)(?:\s+as\s+(\w+))?$/);
+    if (m) {
+      let asname = m[2] || m[1];
+      pianwenLines.push(`${indent}夫機巧初動，引外邦「${m[1]}」之庫，役使為「${asname}」；`);
+      continue;
+    }
+
+    // 2. 網絡請求
+    m = line.match(/^(\w+)\s*=\s*(\w+)\.(?:得|get)\((.+)\)$/);
+    if (m) {
+      pianwenLines.push(`${indent}遣驛使以往訪，運籌「${m[2]}.得(${m[3]})」，定卷為「${m[1]}」；`);
+      continue;
+    }
+
+    // 3. 印出
+    m = line.match(/^(?:書|print)\((.+)\)$/);
+    if (m) {
+      pianwenLines.push(`${indent}几案展卷，落字有聲，明書其辭：${m[1]}；`);
+      continue;
+    }
+
+    // 4. 深度學習
+    if (line.includes(".反溯()") || line.includes(".backward()")) {
+      pianwenLines.push(`${indent}反溯求勢，洞燭幽微，萬千梯度皆通於指掌；`);
+      continue;
+    }
+    if (line.includes(".清勢()") || line.includes(".zero_grad()")) {
+      pianwenLines.push(`${indent}蕩滌前勢，澄澈靈台，重開造化新天；`);
+      continue;
+    }
+    if (line.includes(".步進()") || line.includes(".step()")) {
+      pianwenLines.push(`${indent}循梯度而步進，隨機變而精微，功德又添一重；`);
+      continue;
+    }
+
+    // 5. 條件
+    m = line.match(/^if\s+(.+):$/);
+    if (m) {
+      pianwenLines.push(`${indent}若夫考校其理，審「${m[1]}」符契而稱是：`);
+      continue;
+    }
+    if (line === "else:") {
+      pianwenLines.push(`${indent}如其不然，背道相左：`);
+      continue;
+    }
+
+    // 6. 迴圈
+    m = line.match(/^for\s+(\w+)\s+in\s+(.+):$/);
+    if (m) {
+      pianwenLines.push(`${indent}循序週流，以「${m[1]}」度「${m[2]}」，往復而行：`);
+      continue;
+    }
+
+    // 7. 賦值
+    m = line.match(/^(\w+)\s*=\s*(.+)$/);
+    if (m) {
+      pianwenLines.push(`${indent}設符節曰「${m[1]}」，權衡其理，賦其值曰「${m[2]}」；`);
+      continue;
+    }
+
+    // 預設表達式
+    pianwenLines.push(`${indent}操持法印，施號發令：「${line}」；`);
+  }
+
+  pianwenLines.push("");
+  pianwenLines.push("# ─── 🪶【賦畢 · 算道咸吉】───");
+  return pianwenLines.join("\n");
 }
 
 function deactivate() {}

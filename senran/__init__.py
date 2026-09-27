@@ -44,6 +44,7 @@ from senran.core import (
 )
 from senran.proxy import 裹, 剖, SenranProxy
 from senran.transcriber import 化雅, 轉錄
+from senran.formatter import 賦體, 解賦
 
 __version__ = "0.1.0"
 __all__ = [

@@ -44,6 +44,11 @@
         "command": "senran.transcribe",
         "title": "🐍 森蚺：一鍵化俗為雅（轉錄為文言代碼）",
         "category": "森蚺 (Senran)"
+      },
+      {
+        "command": "senran.formatPianwen",
+        "title": "📜 森蚺：賦體排版（化為 .sr 駢儷文章）",
+        "category": "森蚺 (Senran)"
       }
     ],
     "menus": {
@@ -52,6 +57,11 @@
           "command": "senran.transcribe",
           "when": "editorTextFocus && (resourceExtname == .py || resourceExtname == .sr || resourceExtname == .senran)",
           "group": "senran@1"
+        },
+        {
+          "command": "senran.formatPianwen",
+          "when": "editorTextFocus && (resourceExtname == .py || resourceExtname == .sr || resourceExtname == .senran)",
+          "group": "senran@2"
         }
       ]
     },
@@ -60,6 +70,12 @@
         "command": "senran.transcribe",
         "key": "ctrl+alt+w",
         "mac": "cmd+alt+w",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "senran.formatPianwen",
+        "key": "ctrl+alt+p",
+        "mac": "cmd+alt+p",
         "when": "editorTextFocus"
       }
     ],

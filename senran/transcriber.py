@@ -174,6 +174,40 @@ def 轉錄(來源檔路徑: str, 輸出檔路徑: Optional[str] = None) -> str:
 
 
 def main():
+    from senran.formatter import 賦體, 解賦
+
+    if len(sys.argv) > 1 and sys.argv[1] in ("format", "賦", "駢文"):
+        parser = argparse.ArgumentParser(description="森蚺駢文儀——將代碼排版為四六駢儷體文章 (.sr)")
+        parser.add_argument("cmd", help="format / 賦")
+        parser.add_argument("file", help="Python 原始腳本路徑")
+        parser.add_argument("-o", "--output", help="輸出之 .sr 賦體檔案路徑")
+        args = parser.parse_args()
+
+        with open(args.file, "r", encoding="utf-8") as f:
+            code = f.read()
+        sr = 賦體(code)
+        if args.output:
+            with open(args.output, "w", encoding="utf-8") as f:
+                f.write(sr)
+            print(f"【森蚺駢文儀】賦體卷帙銘刻大成：{args.output}")
+        else:
+            print(sr)
+        return
+
+    if len(sys.argv) > 1 and sys.argv[1] in ("run", "吟", "行"):
+        parser = argparse.ArgumentParser(description="森蚺吟詠儀——執行 .sr 駢儷賦體文卷")
+        parser.add_argument("cmd", help="run / 吟")
+        parser.add_argument("file", help="欲執行之 .sr 賦體檔案路徑")
+        args = parser.parse_args()
+
+        with open(args.file, "r", encoding="utf-8") as f:
+            sr_text = f.read()
+        py_code = 解賦(sr_text)
+        # 執行還原之 Python 代碼
+        exec(py_code, {"__name__": "__main__"})
+        return
+
+    # 預設轉錄模式
     parser = argparse.ArgumentParser(
         description="森蚺轉錄儀（化俗為雅）—— 將庸俗西邦 Python 代碼轉為古雅森蚺文言"
     )
