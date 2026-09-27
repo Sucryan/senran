@@ -4,7 +4,7 @@
 
 [![授權條款：MIT](https://img.shields.io/badge/授權-MIT-yellow.svg)](LICENSE)
 [![版本：Python 3.8+](https://img.shields.io/badge/法度-Python%203.8+-blue.svg)](https://www.python.org/)
-[![考校：皆備](https://img.shields.io/badge/考校-三十一試咸吉-brightgreen.svg)]()
+[![考校：皆備](https://img.shields.io/badge/考校-三十四試咸吉-brightgreen.svg)]()
 
 ---
 
@@ -31,15 +31,92 @@
 
 ---
 
-## 🛠️ 置辦營造（安裝）
+## 🛠️ 置辦營造（安裝與引入）
 
-欲置辦森蚺於案台，自太虛倉庫引入即可：
+### 1. 遙程直引（無需手動 Clone，一行即成正式庫）
+任何學士皆可透過 `pip` 直自太虛倉庫（GitHub）銘刻入系統環境：
 
+```bash
+pip install git+https://github.com/sucryan/senran.git
+```
+*(若已刊印至 PyPI 平台，則直書 `pip install senran` 即可)*
+
+### 2. 案台傳鈔（本機原始碼開發）
 ```bash
 git clone https://github.com/sucryan/senran.git
 cd senran
 pip install -e .
 ```
+
+---
+
+## 🤖 天機神思・機巧使（三界無損互轉與外邦 Agent 調度）
+
+森蚺專為「不會寫代碼之人」與「天機神思（AI Coding Agent）」立下宏願：  
+以白話或文言策問，三界代碼一體同生；亦使任意專案之 AI（Cursor、Claude Code、Copilot、ChatGPT）即刻化身為「機巧使」！
+
+### 1. 白話策問，三界同生（三界章程）
+不會寫代碼之人，只需輸入白話意向，機巧使即刻鋪排「三界互轉代碼」：
+1. **駢儷賦體 (.sr)**：四六對仗、文言詩性，閱讀者無需閱讀繁複註解，閱文即明其意。
+2. **森蚺文言 (.py)**：端方古雅之文言代碼，底層直通 Python 執行。
+3. **西邦原碼 (.py)**：標準原生 Python 代碼，便於西文環境融會貫通。
+
+```python
+from senran import 機巧使
+
+# 策問白話意向
+成果 = 機巧使.策問("我想抓取網頁並解析內容")
+
+print(成果["駢體賦"])  # 📜 .sr 駢儷賦體文章（供人直觀閱讀）
+print(成果["森蚺碼"])  # 🐍 森蚺文言代碼（可直接執行）
+print(成果["標準碼"])  # 💻 標準原生 Python 代碼
+```
+
+### 2. 三界無損雙向互轉
+```python
+from senran import 機巧使
+
+# 西邦標準 Python ⇄ 森蚺文言
+森蚺碼 = 機巧使.化森蚺("res = requests.get('https://example.com')")
+標準碼 = 機巧使.化西文(森蚺碼)
+
+# 代碼 ⇄ 四六駢儷賦體 (.sr)
+駢文 = 機巧使.化駢文(森蚺碼)
+可執行碼 = 機巧使.解駢文(駢文)
+```
+
+### 3. 一鍵設壇（如何讓外部專案的 AI Agents 正常調用）
+當學士在其他專案以 `pip install senran` 引入本庫時，如何讓 Cursor、Claude Code、GitHub Copilot 或 Antigravity 知道要化身為「機巧使」？
+
+只需在專案目錄下敲一行指令：
+```bash
+senran 設壇
+```
+森蚺即刻於當前專案自動銘刻：
+* `AGENTS.md` & `Agent.md`（通用 Agent 法典）
+* `.cursorrules`（Cursor 專屬憲則）
+* `CLAUDE.md`（Claude Code 專屬憲則）
+* `.github/copilot-instructions.md`（GitHub Copilot 專屬憲則）
+
+從此，該專案內的任何 AI 工具皆會自動以「機巧使」之身分發言，遵循《九章算術》之雅言，自動生成森蚺文言與 .sr 駢體！
+
+### 4. 網頁版 AI（ChatGPT / Claude / Gemini / DeepSeek）敕令
+若使用瀏覽器網頁版 AI，只需在終端執行：
+```bash
+senran 敕令
+```
+複製輸出之「機巧使明詔」，貼入 AI 對話窗或自訂指令中，該 AI 即刻開悟化身為森蚺機巧使。
+
+### 5. 終端開壇論道（REPL 互動）
+```bash
+# 終端交互式對話，直接向機巧使吩咐意向
+senran 策問
+
+# 或單次策問
+senran 策問 "我想訓練神經網路計算梯度"
+```
+
+---
 
 ### 🧩 智囊伴侶：VSCode 專屬擴充套件（senran-vscode）
 
@@ -51,7 +128,7 @@ pip install -e .
 * ⚡ **通神符咒（Code Snippets）**：支援 `sr-init`（起手）、`sr-http`（雲端探訪）、`sr-torch`（深度神思）、`sr-file`（案牘卷宗）等一鍵展開。
 
 **一鍵載入法**：
-進入 VSCode 按下 `Ctrl+Shift+P` $\to$ 選取 `Extensions: Install from VSIX...` $\to$ 挑選 `vscode-extension/senran-vscode-0.1.0.vsix` 即可！
+進入 VSCode 按下 `Ctrl+Shift+P` $\to$ 選取 `Extensions: Install from VSIX...` $\to$ 挑選 `vscode-extension/senran-vscode-0.1.1.vsix` 即可！
 
 ---
 
@@ -264,12 +341,12 @@ for 輪 in 疇(1, 51):
 
 ## 🧪 考校明察（測試驗證）
 
-本卷內蘊二十七項法度考校，以驗算理之精微：
+本卷內蘊三十四項法度考校，以驗算理之精微：
 
 ```bash
 python3 -m unittest discover -s tests -v
 ```
-> 報曰：`Ran 27 tests ... OK`，諸法咸吉。
+> 報曰：`Ran 34 tests ... OK`，諸法咸吉。
 
 ---
 

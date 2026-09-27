@@ -175,39 +175,102 @@ def 轉錄(來源檔路徑: str, 輸出檔路徑: Optional[str] = None) -> str:
 
 def main():
     from senran.formatter import 賦體, 解賦
+    from senran.agent import 機巧使
 
-    if len(sys.argv) > 1 and sys.argv[1] in ("format", "賦", "駢文"):
-        parser = argparse.ArgumentParser(description="森蚺駢文儀——將代碼排版為四六駢儷體文章 (.sr)")
-        parser.add_argument("cmd", help="format / 賦")
-        parser.add_argument("file", help="Python 原始腳本路徑")
-        parser.add_argument("-o", "--output", help="輸出之 .sr 賦體檔案路徑")
-        args = parser.parse_args()
+    if len(sys.argv) > 1:
+        cmd = sys.argv[1]
 
-        with open(args.file, "r", encoding="utf-8") as f:
-            code = f.read()
-        sr = 賦體(code)
-        if args.output:
-            with open(args.output, "w", encoding="utf-8") as f:
-                f.write(sr)
-            print(f"【森蚺駢文儀】賦體卷帙銘刻大成：{args.output}")
-        else:
-            print(sr)
-        return
+        # 1. 策問 / 機巧使 (Agent REPL 或 單次問道)
+        if cmd in ("策問", "agent", "ask", "機巧使"):
+            if len(sys.argv) > 2:
+                意向 = " ".join(sys.argv[2:])
+                成果 = 機巧使.策問(意向)
+                print("=" * 60)
+                print("📜【駢儷賦體 · 人讀卷帙 (.sr)】")
+                print("=" * 60)
+                print(成果["駢體賦"])
+                print("\n" + "=" * 60)
+                print("🐍【森蚺文言 · 雅正代碼 (.py)】")
+                print("=" * 60)
+                print(成果["森蚺碼"])
+                print("\n" + "=" * 60)
+                print("💻【標準西文 · 原生代碼 (.py)】")
+                print("=" * 60)
+                print(成果["標準碼"])
+            else:
+                機巧使.開壇()
+            return
 
-    if len(sys.argv) > 1 and sys.argv[1] in ("run", "吟", "行"):
-        parser = argparse.ArgumentParser(description="森蚺吟詠儀——執行 .sr 駢儷賦體文卷")
-        parser.add_argument("cmd", help="run / 吟")
-        parser.add_argument("file", help="欲執行之 .sr 賦體檔案路徑")
-        args = parser.parse_args()
+        # 2. 設壇 (布施 AGENTS.md, .cursorrules, CLAUDE.md 等)
+        if cmd in ("設壇", "init-agent", "init"):
+            target_dir = sys.argv[2] if len(sys.argv) > 2 else "."
+            文卷們 = 機巧使.設壇(target_dir)
+            print("=" * 60)
+            print("🏛️【森蚺 · 機巧使設壇大成】")
+            print(f"壇場地址：{target_dir}")
+            for v in 文卷們:
+                print(f"  ✓ 已敕令明卷：{v}")
+            print("凡天下天機神思（Cursor, Claude, Copilot, Antigravity）入此界者，皆當恪遵森蚺之法度！")
+            print("=" * 60)
+            return
 
-        with open(args.file, "r", encoding="utf-8") as f:
-            sr_text = f.read()
-        py_code = 解賦(sr_text)
-        # 執行還原之 Python 代碼
-        exec(py_code, {"__name__": "__main__"})
-        return
+        # 3. 敕令 (印出 System Prompt 供網頁版 ChatGPT / Claude / Gemini 複製)
+        if cmd in ("敕令", "prompt", "system-prompt"):
+            print(機巧使.天機敕令())
+            return
 
-    # 預設轉錄模式
+        # 4. 化西文 (森蚺文言代碼 -> 標準西邦 Python)
+        if cmd in ("化西文", "to-py", "transpile-to-py"):
+            parser = argparse.ArgumentParser(description="森蚺化西文——將古雅文言轉為標準西邦 Python")
+            parser.add_argument("cmd", help="化西文")
+            parser.add_argument("file", help="森蚺文言檔案路徑")
+            parser.add_argument("-o", "--output", help="輸出之標準 Python 檔案路徑")
+            args = parser.parse_args()
+
+            with open(args.file, "r", encoding="utf-8") as f:
+                code = f.read()
+            py_code = 機巧使.化西文(code)
+            if args.output:
+                with open(args.output, "w", encoding="utf-8") as f:
+                    f.write(py_code)
+                print(f"【森蚺化西文】西文卷帙銘刻大成：{args.output}")
+            else:
+                print(py_code)
+            return
+
+        # 5. 賦體排版 (.sr)
+        if cmd in ("format", "賦", "駢文"):
+            parser = argparse.ArgumentParser(description="森蚺駢文儀——將代碼排版為四六駢儷體文章 (.sr)")
+            parser.add_argument("cmd", help="format / 賦")
+            parser.add_argument("file", help="Python 原始腳本路徑")
+            parser.add_argument("-o", "--output", help="輸出之 .sr 賦體檔案路徑")
+            args = parser.parse_args()
+
+            with open(args.file, "r", encoding="utf-8") as f:
+                code = f.read()
+            sr = 賦體(code)
+            if args.output:
+                with open(args.output, "w", encoding="utf-8") as f:
+                    f.write(sr)
+                print(f"【森蚺駢文儀】賦體卷帙銘刻大成：{args.output}")
+            else:
+                print(sr)
+            return
+
+        # 6. 吟詠執行 (.sr)
+        if cmd in ("run", "吟", "行"):
+            parser = argparse.ArgumentParser(description="森蚺吟詠儀——執行 .sr 駢儷賦體文卷")
+            parser.add_argument("cmd", help="run / 吟")
+            parser.add_argument("file", help="欲執行之 .sr 賦體檔案路徑")
+            args = parser.parse_args()
+
+            with open(args.file, "r", encoding="utf-8") as f:
+                sr_text = f.read()
+            py_code = 解賦(sr_text)
+            exec(py_code, {"__name__": "__main__"})
+            return
+
+    # 預設轉錄模式 (化俗為雅)
     parser = argparse.ArgumentParser(
         description="森蚺轉錄儀（化俗為雅）—— 將庸俗西邦 Python 代碼轉為古雅森蚺文言"
     )
