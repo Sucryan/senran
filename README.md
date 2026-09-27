@@ -1,30 +1,40 @@
 # 🐍 森蚺 (Senran)
 
-> **「蛇之巨者，有蟒與蚺。蟒者行於林野，蚺者吞象納百川。」**  
-> **森蚺（Senran）** 是一套讓你可以**直接用文言文寫 Python**，並**無縫驅策無數現代第三方函式庫**的優雅動態代理模組。
+> **「昔者伏羲作八卦以通神明之德，周公制禮樂而布九數之規。漢有《九章算術》，窮幽索微，為百代算法之宗；近世有高士作《周蟒》，始使華夏文字驅策西土靈機。今作『森蚺』，遠追《九章》之遺法，近承《周蟒》之宏願，以古雅文言驅策萬象西邦庫卷，海納百川，有容乃大。」**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python Version](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/)
-[![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)]()
-
----
-
-## 🌟 核心特色 (Highlights)
-
-1. **萬象森羅（Universal Proxy）**：
-   不需手動為幾萬個套件重寫 `def`。基於 Python 元編程動態代理機制，引入任何 PyPI 套件（`requests`、`numpy`、`pandas`、`torch` 等），皆可直接文言化調用！
-2. **百家相容、永不拋錨**：
-   支援常見動詞前後綴（如 `為_` $\to$ `is_`、`化_` $\to$ `to_`、`取_` $\to$ `get_`）。遇生僻屬性自動相容原庫英文名，並在找不到方法時提供文言智慧相近字提示。
-3. **雅正凝練**：
-   兼具文言韻味與現代編程邏輯，杜絕生硬字面對譯，追求古雅、純粹、簡短之文學意境。
-4. **即插即用**：
-   標準 Python 模組，無須自定義直譯器或修改解譯器，完美相容 VSCode、Jupyter Notebook 與現代虛擬環境。
+[![授權條款：MIT](https://img.shields.io/badge/授權-MIT-yellow.svg)](LICENSE)
+[![版本：Python 3.8+](https://img.shields.io/badge/法度-Python%203.8+-blue.svg)](https://www.python.org/)
+[![考校：皆備](https://img.shields.io/badge/考校-二十一試咸吉-brightgreen.svg)]()
 
 ---
 
-## 📦 安裝方式 (Installation)
+## 📜 稽首前修（致敬）
 
-### 本地開發安裝
+本卷之作，不敢自專，謹稽首致敬於先賢巨帙：
+
+* 🏛️ **《九章算術》**：成於兩漢，劉徽、李淳風為之注。以「方田、粟米、衰分、少廣、商功、均輸、盈不足、方程、勾股」列章，開萬算之法門。森蚺之思辨與章程，皆本乎九章之風骨。
+* 🐍 **《周蟒》（zhpy）**：近人林哲正（gasolin）於丁亥歲（2007）所辟道統。開以華文撰寫 Python 之先河，破夷夏之隔，示後學以大道。
+* 🖋️ **《文言》（wenyan-lang）**：黃令東先生所創之奇巧語言，極盡辭章文理之美，同為吾輩心儀之典範。
+
+---
+
+## 🌌 萬象森羅說（第一性原理）
+
+今西邦有術名曰 **Python**，本蟒類也。其術縱橫四海，名庫千百，然皆操西土鳥篆，学者每有望洋之嘆。  
+或曰：「天下庫卷何止億萬，欲盡譯之，非窮畢生之力不可為也，安能全備？」  
+**答曰：非也。**
+
+**術曰：**  
+西邦之機，行法有常。察其動靜，不外乎名與物而已。  
+客欲問物，機必有應；若所問之名未見，則遣「轉發客」司之。轉發客懷古今之典律，以「取」易 `get`，以「書」易 `write`，以「格」易 `status_code`。雖庫殊派異，其理則一。  
+故森蚺不設萬千死格，但立**「萬象森羅代理客」**，逢山開道，遇水搭橋。凡西邦之庫，入我門來，皆隨手化為雅言。
+
+---
+
+## 🛠️ 置辦營造（安裝）
+
+欲置辦森蚺於案台，自太虛倉庫引入即可：
+
 ```bash
 git clone https://github.com/sucryan/senran.git
 cd senran
@@ -33,124 +43,143 @@ pip install -e .
 
 ---
 
-## 🍵 快速體驗 (Quick Start)
+## 📖 九章演算法（使用範例）
 
-### 1. 天下初開：基礎內建
+### 卷之一【方田】—— 啟蒙立基，度量名錄
+> **今有門生四人，欲錄其名號，算其多寡，並列其序。問：何如調度？**  
+> **答曰：得門生四位，整飭如禮。**
+
 ```python
-from senran import 書, 計, 疇, 總, 序, 錄, 若, 真
+from senran import 書, 計, 疇, 錄, 序, 若, 真
 
 # 几案印出
 書("問天地好在，四海安康！")
 
-# 數算與度量
-門徒 = 錄(["顏回", "子路", "子貢"])
-書("門徒人數：", 計(門徒))
+# 錄籍與度量
+門生 = 錄(["顏回", "子路", "子貢", "冉有"])
+書("門徒人數：", 計(門生))
 
-# 劃定疆界 (range)
+# 劃定疆界巡覽 (range)
 for 數 in 疇(1, 4):
-    書(f"第 {數} 聲：在！")
+    書(f"第 {數} 通鼓，起！")
 
-# 若則邏輯
-功名 = 100
-若(功名 >= 60).則(lambda: 書("明斷：及格矣，善哉！"))
+# 依理排序
+功名 = 錄([88, 92, 75, 99])
+書("按等第排列：", 序(功名))
 ```
 
-### 2. 雲端探訪：驅策 Requests
+---
+
+### 卷之二【均輸】—— 馳驛千里，雲端通訊（Requests）
+> **今有驛使欲探太虛之境（HTTP API）。問：路途通暢否？所攜幾何？**  
+> **答曰：得格二百，其途坦蕩。**
+
 ```python
 from senran import 引入, 書
 
-# 引入任意第三方庫
+# 引入西邦 requests 庫
 求 = 引入("requests")
+
+# 遣驛使前往探問 (get)
 報 = 求.得("https://httpbin.org/get")
 
-書("回報狀態格：", 報.格)         # status_code
-書("驛使所帶之文：", 報.文[:60])     # text
-書("剖析為譜：", 報.譜().get("url")) # json()
+書("驛使回報狀態格：", 報.格)         # status_code -> 200
+書("此行順遂否：", "吉" if 報.格 == 200 else "凶")
+書("驛報文章前段：", 報.文[:50])        # text
+書("剖解為譜：", 報.譜().get("url"))   # json()
 ```
 
-### 3. 格物算學：驅策 NumPy 與 Pandas
+---
+
+### 卷之三【勾股】—— 方陣運算，割圓量海（NumPy / Math）
+> **今有八卦方陣，各布其數。欲考其形貌，求其總和，推其均平。問：法何出？**  
+> **術曰：以陣布列，總其數，均其值。**
+
 ```python
 from senran import 引入, 書
 
+算術 = 引入("math")
 算矩 = 引入("numpy")
-史冊 = 引入("pandas")
 
-# 矩陣計算
-陣 = 算矩.陣([[1, 2], [3, 4]])
-書("矩陣形貌：", 陣.形)   # shape
-書("各項均值：", 陣.均())  # mean()
-書("各項總和：", 陣.總())  # sum()
+# 開方測距 (sqrt)
+書("開方八十一得：", 算術.開方(81))
 
-# 資料卷帙
-卷 = 史冊.DataFrame({"名": ["太白", "東坡"], "酒量": [100, 80]})
-書("卷帙首列：\n", 卷.冠(1))  # head(1)
+# 八卦方陣 (array)
+方陣 = 算矩.陣([
+    [1, 2, 3],
+    [4, 5, 6],
+    [7, 8, 9]
+])
+
+書("方陣形貌：", 方陣.形)   # shape -> (3, 3)
+書("全陣均值：", 方陣.均())  # mean() -> 5.0
+書("全陣總和：", 方陣.總())  # sum()  -> 45
 ```
 
-### 4. 府庫檔案與資料庫：File I/O & SQLite3
+---
+
+### 卷之四【商功】—— 案牘批閱，卷宗進退（檔案讀寫與 SQLite）
+> **今有良銘欲刻於石碑，復有英雄榜欲定於公堂。問：何以銘之？何以存之？**  
+> **答曰：開卷以筆銘，立堂以法判。**
+
 ```python
 from senran import 引入, 啟, 書
 
-# 檔案上下文管理 (with)
-with 啟("碑銘.txt", "w", encoding="utf-8") as 牘:
+# 1. 卷宗檔案上下文 (with 啟)
+with 啟("銘刻.txt", "w", encoding="utf-8") as 牘:
     牘.書("天下大事，必作於細。")  # write
 
-with 啟("碑銘.txt", "r", encoding="utf-8") as 牘:
-    書("讀得：", 牘.閱())         # read
+with 啟("銘刻.txt", "r", encoding="utf-8") as 牘:
+    書("石碑銘文：", 牘.閱())      # read
 
-# SQLite 資料庫操作
+# 2. 府衙案台 (SQLite3)
 庫 = 引入("sqlite3")
-連線 = 庫.通(":memory:")      # connect
-案台 = 連線.案台()            # cursor
-案台.判詞("CREATE TABLE 榜 (名 TEXT, 分 INT)") # execute
-案台.判詞("INSERT INTO 榜 VALUES ('子淵', 100)")
+連線 = 庫.通(":memory:")         # connect
+案台 = 連線.案台()               # cursor
+
+案台.判詞("CREATE TABLE 榜 (名 TEXT, 功 INT)") # execute
+案台.判詞("INSERT INTO 榜 VALUES ('關雲長', 99), ('趙子龍', 98)")
 案台.判詞("SELECT * FROM 榜")
-書("案台得錄：", 案台.盡攬()) # fetchall
-連線.閉()                    # close
+
+書("英雄名冊：", 案台.盡攬())     # fetchall
+連線.閉()                        # close
 ```
 
 ---
 
-## 📜 常用詞律對照 (Lexicon Reference)
+## 📑 典律總目（常用文言對照）
 
-| 類型 | 文言屬性 / 方法 | 原生 Python 對應 | 涵蓋範例函式庫 |
+森蚺體察古今，定常用之符節如下：
+
+| 部類 | 文言召喚 | 底層 Python 屬性 / 函式 | 常用庫示例 |
 | :--- | :--- | :--- | :--- |
-| **內建** | `書` / `問` / `計` / `疇` / `總` | `print`, `input`, `len`, `range`, `sum` | Python 核心 |
-| **常數** | `真` / `假` / `空` | `True`, `False`, `None` | Python 核心 |
-| **型別** | `整` / `浮` / `文` / `錄` / `譜` | `int`, `float`, `str`, `list`, `dict` | Python 核心 |
-| **獲取** | `得` / `取` / `徵` / `索` / `尋` | `get`, `fetch`, `find`, `search` | `requests`, `bs4`, `re` |
-| **發送** | `投` / `寄` / `置` / `設` | `post`, `send`, `put`, `set` | `requests`, `httpx`, `socket` |
-| **傳輸** | `格` / `態` / `文` / `實` / `譜` | `status_code`, `text`, `content`, `json` | `requests`, `httpx`, `urllib` |
-| **結構** | `附` / `綴` / `插` / `黜` / `析` / `合` | `append`, `extend`, `insert`, `remove`, `split`, `join` | 序列與容器庫 |
-| **檔案** | `啟` / `閱` / `書` / `閉` / `存` | `open`, `read`, `write`, `close`, `exists` | `io`, `os`, `pathlib` |
-| **算學** | `開方` / `正弦` / `陣` / `形` / `均` / `總` | `sqrt`, `sin`, `array`, `shape`, `mean`, `sum` | `math`, `numpy` |
-| **卷帙** | `欄` / `冠` / `履` / `描述` / `依序` | `columns`, `head`, `tail`, `describe`, `sort_values` | `pandas`, `polars` |
-| **判詞** | `通` / `判詞` / `盡攬` / `攬一` / `案台` | `connect`, `execute`, `fetchall`, `fetchone`, `cursor` | `sqlite3`, `sqlalchemy` |
-| **前綴** | `為_*` / `化_*` / `取_*` / `設_*` | `is_*`, `to_*`, `get_*`, `set_*` | 萬用前綴自動轉譯 |
+| **元常** | `真`、`假`、`空`、`無` | `True`、`False`、`None` | 內建 |
+| **几案** | `書`、`問`、`審`、`係` | `print`、`input`、`type`、`isinstance` | 內建 |
+| **度量** | `計`、`疇`、`總`、`極大`、`極小` | `len`、`range`、`sum`、`max`、`min` | 內建 |
+| **收納** | `得`、`取`、`徵`、`索`、`尋` | `get`、`fetch`、`find`、`search` | requests, bs4, re |
+| **傳遞** | `投`、`寄`、`發`、`置`、`設` | `post`、`send`、`put`、`set` | requests, httpx, socket |
+| **驛報** | `格`、`態`、`文`、`實`、`譜` | `status_code`、`text`、`content`、`json` | requests, urllib |
+| **矩陣** | `陣`、`形`、`均`、`和`、`塑`、`皆零` | `array`、`shape`、`mean`、`sum`、`reshape`、`zeros`| numpy, scipy |
+| **卷帙** | `欄`、`冠`、`履`、`描述`、`依序` | `columns`、`head`、`tail`、`describe`、`sort_values`| pandas, polars |
+| **案牘** | `啟`、`閱`、`書`、`閉`、`通`、`判詞` | `open`、`read`、`write`、`close`、`connect`、`execute`| io, os, sqlite3 |
+| **律則** | `為_*`、`化_*`、`取_*`、`設_*` | `is_*`、`to_*`、`get_*`、`set_*` | 萬用前綴自動轉譯 |
+
+> **注**：凡未及備載之冷僻西域名稱，森蚺皆直接放行相容。若誤筆求不可得之物，森蚺必自省其身，出古典之辭指引相近字，絕無窒礙。
 
 ---
 
-## 🧪 運行測試 (Running Tests)
+## 🧪 考校明察（測試驗證）
 
-專案具備完整之測試套件，涵蓋內建語意、元編程代理、容錯建議以及真實生態系套件支援：
+本卷內蘊二十一項法度考校，以驗算理之精微：
 
 ```bash
 python3 -m unittest discover -s tests -v
 ```
+> 報曰：`Ran 21 tests ... OK`，諸法咸吉。
 
 ---
 
-## 🤝 參與貢獻 (Contributing)
+## 📜 牌記（LICENSE）
 
-歡迎提交 Pull Request 為森蚺增添更多文言典籍或修飾詞律！
-1. Fork 本倉庫
-2. 建立你的分支 (`git checkout -b feature/suanjing-advance`)
-3. 在 `senran/dictionary.py` 增添詞律或擴充 `senran/scrolls/`
-4. 確保通過測試 (`python3 -m unittest discover -s tests`)
-5. 提交並發起 Pull Request
-
----
-
-## 📄 授權條款 (License)
-
-本專案採用 [MIT License](LICENSE) 授權。
-無論身處廟堂之高，或居江湖之遠，皆可自由研讀、揮灑與流傳。
+本卷遵行 **MIT 授權牌記**。  
+天地無私，斯術同乘。天下學士，皆得傳鈔、講習、刊刻與興造，垂范後世。
