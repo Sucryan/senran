@@ -2,7 +2,7 @@
   "name": "senran-vscode",
   "displayName": "森蚺 (Senran) — 文言 Python 智囊輔助",
   "description": "以文言驅策萬象 Python 函式庫：提供古典詞律智慧補全、懸停解經與常用代碼片段",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publisher": "sucryan",
   "license": "MIT",
   "engines": {
@@ -58,12 +58,24 @@
         {
           "command": "senran.transcribe",
           "when": "editorTextFocus",
-          "group": "1_modification@1"
+          "group": "navigation@1"
         },
         {
           "command": "senran.formatPianwen",
           "when": "editorTextFocus",
-          "group": "1_modification@2"
+          "group": "navigation@2"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "senran.transcribe",
+          "when": "resourceLangId == python",
+          "group": "navigation"
+        },
+        {
+          "command": "senran.formatPianwen",
+          "when": "resourceLangId == python || resourceLangId == senran",
+          "group": "navigation"
         }
       ]
     },
