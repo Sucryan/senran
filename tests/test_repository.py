@@ -8,6 +8,23 @@ from senran.codec import encode_names, decode_source
 
 
 class RepositoryTests(unittest.TestCase):
+    def test_whole_repository_zhpy_roundtrip(self):
+        from senran.repository import convert_repository
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            source = root / 'source'
+            source.mkdir()
+            original = b'def f():\r\n    return 3\r\n'
+            (source / 'a.py').write_bytes(original)
+            previous = source
+            for mode in ('encode', 'format', 'unformat', 'decode'):
+                destination = root / mode
+                convert_repository(previous, destination, mode, style='zhpy')
+                previous = destination
+                if mode == 'encode':
+                    self.assertIn('定義 f():', (destination / 'a.py').read_text())
+            self.assertEqual((previous / 'a.py').read_bytes(), original)
+
     def test_cli_markdown_chain_preserves_newlines(self):
         import subprocess
         import sys

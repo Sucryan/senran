@@ -563,7 +563,7 @@ function activate(context) {
   );
 
   // 3. 一鍵化俗為雅（代碼轉錄指令）
-  const transcribeCommand = vscode.commands.registerCommand('senran.transcribe', async () => {
+  const transcribe = async (mode) => {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
       vscode.window.showWarningMessage('【森蚺】未得開啟中之文卷（無作用中的編輯器）。');
@@ -580,7 +580,12 @@ function activate(context) {
       return;
     }
     const textToConvert = isSelection ? document.getText(selection) : document.getText();
-    const transcribed = await checkedConversion(document.languageId === 'markdown' ? 'unformat' : 'transcribe', textToConvert);
+    let source = textToConvert;
+    if (document.languageId === 'markdown') {
+      source = await checkedConversion('unformat', source);
+      if (source === null) return;
+    }
+    const transcribed = await checkedConversion(mode, source);
     if (transcribed === null) return;
     if (document.version !== version) {
       vscode.window.showWarningMessage('【森蚺】轉換期間文卷已修改，請重新轉換。');
@@ -599,8 +604,12 @@ function activate(context) {
       }
     });
 
-    vscode.window.showInformationMessage('🐍【森蚺】化俗為雅大成！已將代碼轉錄為古雅文言。');
-  });
+    vscode.window.showInformationMessage(mode === 'zhpy'
+      ? '🗣️【森蚺】周蟒白話轉錄大成！'
+      : '🐍【森蚺】化俗為雅大成！已將代碼轉錄為古雅文言。');
+  };
+  const transcribeCommand = vscode.commands.registerCommand('senran.transcribe', () => transcribe('transcribe'));
+  const toZhpyCommand = vscode.commands.registerCommand('senran.toZhpy', () => transcribe('zhpy'));
 
   // 4. 賦體排版（化為 .sr 駢儷賦體文章）
   const formatPianwenCommand = vscode.commands.registerCommand('senran.formatPianwen', async () => {
@@ -612,7 +621,9 @@ function activate(context) {
 
     const document = editor.document;
     const text = document.getText();
-    const pianwen = await checkedConversion('format', text);
+    const source = document.languageId === 'markdown' ? await checkedConversion('unformat', text) : text;
+    if (source === null) return;
+    const pianwen = await checkedConversion('format', source);
     if (pianwen === null) return;
 
     // 於右側開啟新視窗展現 Markdown 駢文
@@ -664,7 +675,7 @@ function activate(context) {
     vscode.window.showInformationMessage('💻【森蚺】化雅為俗大成！已將文言代碼逆轉為標準西邦代碼。');
   });
 
-  context.subscriptions.push(completionProvider, hoverProvider, transcribeCommand, formatPianwenCommand, toStandardPyCommand);
+  context.subscriptions.push(completionProvider, hoverProvider, transcribeCommand, toZhpyCommand, formatPianwenCommand, toStandardPyCommand);
 }
 
 function deactivate() {}

@@ -17,7 +17,7 @@
 本卷之作，不敢自專，謹稽首致敬於先賢巨帙：
 
 * 🏛️ **《九章算術》**：成於兩漢，劉徽、李淳風為之注。以「方田、粟米、衰分、少廣、商功、均輸、盈不足、方程、勾股」列章，開萬算之法門。森蚺之思辨與章程，皆本乎九章之風骨。
-* 🐍 **《周蟒》（zhpy）**：近人林哲正（gasolin）於丁亥歲（2007）所辟道統。開以華文撰寫 Python 之先河，破夷夏之隔，示後學以大道。
+* 🐍 **《周蟒》（zhpy）**：近人林哲正（gasolin）於丁亥歲（2007）所辟道統。開以華文撰寫 Python 之先河，破夷夏之隔，示後學以大道。今已併入其繁、簡詞表，承其白話之法，益以文言之律；源流與授權，詳見下章。
 * 🖋️ **《文言》（wenyan-lang）**：黃令東先生所創之奇巧語言，極盡辭章文理之美，同為吾輩心儀之典範。
 
 ---
@@ -53,6 +53,67 @@ git clone https://github.com/sucryan/senran.git
 cd senran
 pip install -e .
 ```
+
+---
+
+## 📜 白話文言，同出一門（周蟒融入）
+
+森蚺已將[周蟒](https://github.com/gasolin/zhpy)之繁、簡中文詞表改編併入，非止列名致敬。
+使用者可兼用白話、文言與 Python 原語；變數之名，中西皆可，無須盡易為漢字。
+森蚺之增益，在於文言語法、萬象代理與駢文往返；周蟒之白話根基，仍存其用。
+
+```python
+類別 Box:
+    術 value(我):
+        如果 真:
+            歸 3
+
+印出(Box().value())
+```
+
+此卷兼用周蟒之「類別、我、如果、印出」與森蚺之「術、歸」；可存為 `mixed.senran`，循下令而行：
+
+```bash
+senran run mixed.senran
+```
+
+欲由西文轉周蟒、由周蟒轉森蚺，或復歸原文，亦有專令：
+
+```bash
+senran zhpy input.py -o plain.senran
+senran plain.senran -o classical.senran
+senran 化西文 plain.senran -o original.py
+```
+
+由有封卷之周蟒或森蚺互轉，仍保最初來源之還原契；手寫未封之中文卷，化西文則依詞律譯為 Python，不冒稱曾有西文原稿。
+右鍵之「西文」以 Python 為歸處：若原稿本為中文方言，則譯其語法；若原稿本為 Python，則逐字復之。
+另 `化西文()`、`senran 化西文` 及整庫 `decode` 為原稿還原之契，封卷起於中文者，仍可取回原中文稿，不與編譯混同。
+
+### 文言語法之律
+
+| 部類 | Python 原語 | 森蚺文言 |
+| :--- | :--- | :--- |
+| 定術立類 | `def`、`class`、`lambda`、`return` | `術`、`類`、`匿名`、`歸` |
+| 分途擇路 | `if`、`elif`、`else`、`match`、`case` | `若`、`若又`、`否則`、`配`、`案` |
+| 巡覽進退 | `for`、`in`、`while`、`break`、`continue`、`pass` | `遍`、`於`、`當`、`止`、`續`、`略` |
+| 驗算辨偽 | `try`、`except`、`finally`、`raise`、`assert` | `試`、`捕`、`終`、`擲`、`驗` |
+| 引卷共事 | `from`、`import`、`as`、`with` | `由`、`納`、`作`、`偕` |
+| 異步產值 | `async`、`await`、`yield` | `異步`、`候`、`產` |
+| 判理取捨 | `and`、`or`、`not`、`is` | `且`、`或`、`非`、`乃` |
+| 名域刪改 | `global`、`nonlocal`、`del`、`type`（型別宣告） | `全域`、`外域`、`刪`、`型別宣告` |
+| 元常通配 | `True`、`False`、`None`、`_`（通配） | `真`、`假`、`空`、`任` |
+
+周蟒白話亦可用「定義／定义、返回、取、在、嘗試／尝试、印出／打印」等詞；英語關鍵字亦無須禁絕。
+詞與名須依 Python 之法分隔，如 `如果 真:`，不將 `如果真` 強拆為二詞。字串、註解與點號後之屬性不作語法改寫。
+中文語法卷須經 `senran run` 翻譯而行，不可直接交付原生 `python mixed.senran`；中文語法詞及白話內建詞，在此入口視為保留之名。
+
+### 源流與授權
+
+所併者為周蟒 `zhpy3/plugtw.py`、`plugcn.py` 之詞表，來源提交為
+[`f4d932a`](https://github.com/gasolin/zhpy/tree/f4d932a5ab810158ef4e4113df337cbf7d83817a)。
+其著作權歸 **Fred Lin and contributors（2007 起）**，遵 MIT 授權；完整聲明保留於
+[`senran/zhpy_keywords.py`](senran/zhpy_keywords.py)。
+本次併入語法及現行 Python 3 內建詞之轉譯，不攜周蟒舊執行器；不宣稱 Python 2 程式、插件、中文模組名與方法名皆可原樣運行。
 
 ---
 
@@ -145,8 +206,9 @@ senran 策問 "我想訓練神經網路計算梯度"
 **一鍵載入法**：
 
 先入 `vscode-extension/`，行 `npx @vscode/vsce package` 以成安裝卷；Git 惟收原碼與圖徽。
-於 VS Code 按 `Ctrl+Shift+P`，選 `Extensions: Install from VSIX...`，納入 `senran-vscode-0.1.6.vsix` 即可。
-化雅、化俗、排賦，皆由右鍵選單入；不置按鈕於編輯器頂端。三令共用森蚺轉錄之核，Markdown 亦可解賦或還原 Python。
+於 VS Code 按 `Ctrl+Shift+P`，選 `Extensions: Install from VSIX...`，納入 `senran-vscode-0.1.7.vsix` 即可。
+右鍵列四途：**周蟒（白話）、森蚺（文言）、Markdown（駢文）、西文（Python）**。
+不置按鈕於編輯器頂端。四令共用轉錄之核，Markdown 亦可轉周蟒、森蚺或還原 Python。
 
 ---
 
@@ -217,10 +279,12 @@ senran repo unformat 駢文庫 解賦庫
 senran repo decode 解賦庫 還原庫
 ```
 
+若欲舉庫轉為周蟒，首令改為 `senran repo encode-zhpy 原庫 周蟒庫`；其後排賦、解賦、還原之法皆同。
+
 ### 閱卷之法
 
-整庫閱覽體，凡非保留之名，悉依詞律易之；已知者取雅稱，未載者編為可逆漢字。
-Python 保留字、字串、註解及檔名，皆存其舊；`.pyx`、C、圖像諸卷，亦原樣搬存。
+整庫閱覽體，語法關鍵字悉易為文言；其餘之名，已知者取雅稱，未載者編為可逆漢字。
+字串、註解及檔名，皆存其舊；`.pyx`、C、圖像諸卷，亦原樣搬存。
 此體為閱覽與還原而設，欲行其算，須先復為 Python；不可謂萬庫譯畢皆能直行。
 Python 須為 3.12 以上，方能辨 f-string 中之名稱。
 
@@ -239,6 +303,7 @@ Python 須為 3.12 以上，方能辨 f-string 中之名稱。
 
 ```bash
 python3 tools/verify_repositories.py --fetch
+python3 tools/verify_repositories.py --style zhpy
 ```
 
 考校先定各庫之 Git 提交，繼而逐檔比對位元組、權限、連結與目錄；不執行其程式，亦不鍛造或評估外邦機器學習之術。

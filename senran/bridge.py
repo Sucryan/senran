@@ -2,35 +2,40 @@
 import json
 import sys
 
-from senran.codec import encode_names, unpack, MARKER
+from senran.codec import encode_names, unpack, decode_source, to_python, MARKER
 from senran.transcriber import 化雅
 from senran.agent import 轉西文
 from senran.formatter import 賦體, 解賦
 
 
+def is_packet(code):
+    metadata = None
+    try:
+        if code.startswith(MARKER):
+            metadata = json.loads(code.split('\n', 1)[0][len(MARKER):])
+    except ValueError:
+        pass
+    return (isinstance(metadata, dict) and metadata.get('mode') in {'names', 'runtime'}
+            and {'source_hash', 'body_hash'} <= set(metadata))
+
+
 def convert(mode, code):
-    if mode == 'transcribe':
-        return encode_names(code)
+    if mode in {'transcribe', 'zhpy'}:
+        original = decode_source(code) if is_packet(code) else code
+        return encode_names(original, style='zhpy' if mode == 'zhpy' else 'senran')
     if mode == 'proxy':
         return 化雅(code)
     if mode == 'reverse':
-        return 轉西文(code)
+        return to_python(code) if is_packet(code) else 轉西文(code)
     if mode == 'format':
-        metadata = None
-        try:
-            if code.startswith(MARKER):
-                metadata = json.loads(code.split('\n', 1)[0][len(MARKER):])
-        except ValueError:
-            pass
-        sealed = (isinstance(metadata, dict) and metadata.get('mode') in {'names', 'runtime'}
-                  and {'source_hash', 'body_hash'} <= set(metadata))
+        sealed = is_packet(code)
         if sealed:
             unpack(code)
         return 賦體(code if sealed else encode_names(code))
     if mode == 'unformat':
         return 解賦(code)
     if mode == 'markdown-reverse':
-        return 轉西文(解賦(code))
+        return convert('reverse', 解賦(code))
     raise ValueError('未知轉換方向。')
 
 

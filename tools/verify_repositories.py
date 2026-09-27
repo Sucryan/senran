@@ -39,12 +39,13 @@ def snapshot(root):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--fetch', action='store_true')
+    parser.add_argument('--style', choices=['senran', 'zhpy'], default='senran')
     parser.add_argument('repositories', nargs='*')
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     reports = []
     version = hashlib.sha256(b''.join((root / 'senran' / name).read_bytes()
-                                     for name in ['codec.py', 'formatter.py', 'repository.py'])).hexdigest()[:12]
+                                     for name in ['codec.py', 'formatter.py', 'repository.py', 'zhpy_keywords.py'])).hexdigest()[:12] + '-' + args.style
     for repo in args.repositories or REPOSITORIES:
         if repo not in REPOSITORIES:
             raise ValueError('參考庫不在清單內：' + repo)
@@ -64,18 +65,19 @@ def main():
             destination = output / mode
             # 既有結果也必須比對，絕不覆蓋。
             if not destination.exists():
-                convert_repository(previous, destination, mode)
+                convert_repository(previous, destination, mode, style=args.style)
             previous = destination
         restored = snapshot(previous)
         mismatches = sorted(key for key in set(original) | set(restored) if original.get(key) != restored.get(key))
-        report = {'repository': repo, 'commit': commit, 'entries': len(original),
+        report = {'repository': repo, 'style': args.style, 'commit': commit, 'entries': len(original),
                   'python_files': sum(key.endswith('.py') and value[0] == 'file' for key, value in original.items()),
                   'mismatches': mismatches, 'restored': str(previous)}
         print(json.dumps(report, ensure_ascii=False), flush=True)
         reports.append(report)
         if mismatches:
             raise AssertionError('往返有差異：' + repo)
-    (root / 'examples' / 'roundtrip' / 'report.json').write_text(json.dumps(reports, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+    report_name = 'report.json' if args.style == 'senran' else 'zhpy-report.json'
+    (root / 'examples' / 'roundtrip' / report_name).write_text(json.dumps(reports, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
 
 
 if __name__ == '__main__':

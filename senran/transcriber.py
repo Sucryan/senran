@@ -12,7 +12,10 @@ from typing import Optional
 
 def 化雅(代碼: str) -> str:
     """將標準 Python 轉為有校驗封卷的森蚺代理體。"""
-    from senran.codec import encode_runtime
+    from senran.codec import encode_runtime, decode_source
+    from senran.bridge import is_packet
+    if is_packet(代碼):
+        代碼 = decode_source(代碼)
     return encode_runtime(代碼)
 
 
@@ -43,6 +46,22 @@ def main():
             from senran.repository import main as repo_main
             del sys.argv[1]
             repo_main()
+            return
+        if cmd in ('zhpy', '周蟒'):
+            parser = argparse.ArgumentParser(description='轉為周蟒白話中文卷')
+            parser.add_argument('cmd')
+            parser.add_argument('file')
+            parser.add_argument('-o', '--output')
+            args = parser.parse_args()
+            from senran.bridge import convert
+            with open(args.file, encoding='utf-8', newline='') as stream:
+                source = stream.read()
+            result = convert('zhpy', 解賦(source) if args.file.lower().endswith('.md') else source)
+            if args.output:
+                with open(args.output, 'w', encoding='utf-8', newline='') as stream:
+                    stream.write(result)
+            else:
+                sys.stdout.write(result)
             return
         if cmd in ('unformat', '解賦'):
             parser = argparse.ArgumentParser(description='駢文還原完整森蚺碼卷')
@@ -146,10 +165,9 @@ def main():
 
             with open(args.file, "r", encoding="utf-8", newline="") as f:
                 sr_text = f.read()
-            py_code = 解賦(sr_text)
-            from senran.codec import decode_source
-            original = decode_source(py_code)
-            exec(compile(original if original is not None else py_code, args.file, 'exec'),
+            py_code = 解賦(sr_text) if args.file.lower().endswith('.md') else sr_text
+            from senran.codec import to_python
+            exec(compile(to_python(py_code), args.file, 'exec'),
                  {"__name__": "__main__", "__file__": args.file})
             return
 

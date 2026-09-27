@@ -17,7 +17,7 @@ flag = True
         self.assertIn("疇(10)", converted)
         self.assertIn("總([1, 2])", converted)
         self.assertIn("flag = 真", converted)
-        self.assertIn("from senran import", converted)
+        self.assertIn("由 senran 納", converted)
 
     def test_transcribe_requests(self):
         code = """

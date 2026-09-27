@@ -9,7 +9,7 @@ import re
 import sys
 import json
 import warnings
-from senran.codec import digest
+from senran.codec import digest, to_python
 from typing import List, Tuple, Optional
 
 
@@ -34,7 +34,7 @@ class PianwenFormatter(ast.NodeVisitor):
         try:
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore', SyntaxWarning)
-                tree = ast.parse(source_code)
+                tree = ast.parse(to_python(source_code))
                 for node in tree.body:
                     self.visit(node)
         except (SyntaxError, ValueError, TypeError, SystemError, RecursionError):

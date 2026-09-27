@@ -8,8 +8,10 @@ import re
 import bisect
 import warnings
 import tokenize
+import builtins
 
 from senran.dictionary import ALL_LEXICON
+from senran.zhpy_keywords import ZHPY_ALIASES
 
 MARKER = '# senran-source-v1 '
 BUILTINS = {
@@ -21,6 +23,30 @@ BUILTINS = {
     'enumerate': '枚', 'zip': '並',
 }
 CONSTANTS = {'True': '真', 'False': '假', 'None': '空'}
+GRAMMAR = {
+    'False': '假', 'None': '空', 'True': '真', 'and': '且', 'as': '作',
+    'assert': '驗', 'async': '異步', 'await': '候', 'break': '止',
+    'class': '類', 'continue': '續', 'def': '術', 'del': '刪',
+    'elif': '若又', 'else': '否則', 'except': '捕', 'finally': '終',
+    'for': '遍', 'from': '由', 'global': '全域', 'if': '若',
+    'import': '納', 'in': '於', 'is': '乃', 'lambda': '匿名',
+    'nonlocal': '外域', 'not': '非', 'or': '或', 'pass': '略',
+    'raise': '擲', 'return': '歸', 'try': '試', 'while': '當',
+    'with': '偕', 'yield': '產', 'match': '配', 'case': '案',
+    'type': '型別宣告', '_': '任',
+}
+PLAIN_GRAMMAR = dict(GRAMMAR, **{
+    'def': '定義', 'class': '類別', 'return': '返回', 'if': '如果',
+    'elif': '否則如果', 'for': '取', 'in': '在', 'break': '跳出',
+    'continue': '繼續', 'pass': '略過', 'try': '嘗試', 'except': '異常',
+    'finally': '最後', 'raise': '引發', 'assert': '申明', 'from': '從',
+    'import': '導入', 'as': '作為', 'with': '伴隨', 'yield': '產生',
+    'lambda': '方程式', 'is': '是', 'del': '刪除',
+})
+PLAIN_NAMES = {'self': '我', 'print': '印出', 'input': '輸入', 'len': '長度',
+               'range': '範圍', 'sum': '總和', 'list': '列表', 'dict': '字典',
+               'str': '字串', 'int': '整數', 'float': '浮點數', 'bool': '布林',
+               'tuple': '元組', 'set': '集合', 'open': '打開'}
 ALIASES = {'requests': '求', 'httpx': '疾求', 'torch': '神算',
            'numpy': '算矩', 'pandas': '史冊', 'math': '算術',
            'json': '法書', 'sqlite3': '庫', 'flask': '法宴',
@@ -104,43 +130,91 @@ def unpack(source):
     return metadata, body
 
 
-def encode_names(source):
-    """整庫閱覽模式；更名所有非保留字，絕不保存原碼副本。"""
+def bindings(tree):
+    bound = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Name) and isinstance(node.ctx, (ast.Store, ast.Del)):
+            bound.add(node.id)
+        elif isinstance(node, ast.arg):
+            bound.add(node.arg)
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            bound.add(node.name)
+        elif isinstance(node, (ast.Import, ast.ImportFrom)):
+            bound.update(alias.asname or alias.name.split('.')[0] for alias in node.names)
+    return bound
+
+
+def source_language(source):
+    """原生碼優先；未綁定的中文內建呼叫與中文語法視為方言。"""
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', SyntaxWarning)
+            tree = ast.parse(source)
+    except (SyntaxError, ValueError, TypeError, SystemError, RecursionError):
+        return 'dialect'
+    bound = bindings(tree)
+    aliases = dict(ZHPY_ALIASES)
+    aliases.update({value: key for key, value in BUILTINS.items()})
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load):
+            if node.id not in bound and node.id in aliases and hasattr(builtins, aliases[node.id]):
+                return 'dialect'
+    return 'python'
+
+
+def encode_names(source, style='senran'):
+    """整庫閱覽模式；文言語法與可逆更名，絕不保存原碼副本。"""
     positions = offsets(source)
+    if style not in {'senran', 'zhpy'}:
+        raise ValueError('未知中文詞律。')
+    grammar_table = PLAIN_GRAMMAR if style == 'zhpy' else GRAMMAR
     mapping = {}
     edits = []
-    reserved = set(keyword.kwlist) | set(getattr(keyword, 'softkwlist', ()))
+    dialect = {value: key for key, value in GRAMMAR.items()}
+    dialect.update(ZHPY_ALIASES)
     for token in tokens(source):
         name = token.string
-        if token.type != tokenize.NAME or name in reserved or (name.startswith('__') and name.endswith('__')):
+        if token.type != tokenize.NAME or (name.startswith('__') and name.endswith('__')):
             continue
         if name not in mapping:
             # 原名的 UTF-8 十六進位拼寫轉為漢字，名稱跨檔穩定且不相撞。
             suffix = ''.join(HEX_DIGITS[int(digit, 16)] for digit in name.encode('utf-8').hex())
-            base = VOCABULARY.get(name, '名')
-            mapping[name] = base if CANONICAL.get(base) == name else base + '之' + suffix
+            native = dialect.get(name, name)
+            base = VOCABULARY.get(native, '名')
+            grammar = grammar_table.get(native)
+            if style == 'zhpy':
+                mapping[name] = grammar or PLAIN_NAMES.get(native, name)
+            else:
+                mapping[name] = grammar or (base if CANONICAL.get(base) == native and base not in GRAMMAR.values() else base + '之' + suffix)
         edits.append((positions[token.start[0] - 1] + token.start[1],
                       positions[token.end[0] - 1] + token.end[1], mapping[name]))
     body = patch(source, edits)
     ordered = list(mapping)
-    indexes = {mapping[name]: index for index, name in enumerate(ordered)}
+    indexes = {name: index for index, name in enumerate(ordered)}
     spans = []
     shift = 0
     for start, end, replacement in sorted(edits):
-        spans.append([start + shift, indexes[replacement]])
+        spans.append([start + shift, indexes[source[start:end]]])
         shift += len(replacement) - (end - start)
-    return seal(body, {'mode': 'names', 'names': {value: key for key, value in mapping.items()},
+    return seal(body, {'mode': 'names', 'style': style, 'source_language': source_language(source),
+                       'symbols': [[mapping[name], name] for name in ordered],
                        'spans': spans, 'source_hash': digest(source)})
 
 
 def encode_runtime(source):
     """沿用代理體的小程式入口；可逆記錄每項改動，字串註解不動。"""
-    tree = ast.parse(source)
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        # 中文語法以可逆閱覽體收錄，不以 Python 解析器硬解。
+        ast.parse(to_python(source))
+        return encode_names(source)
     positions = offsets(source)
     stream = tokens(source)
     edits = []
     aliases = {}
     import_ranges = []
+    rewritten_import_ranges = []
     bound = {node.id for node in ast.walk(tree) if isinstance(node, ast.Name) and isinstance(node.ctx, (ast.Store, ast.Del))}
     bound.update(node.arg for node in ast.walk(tree) if isinstance(node, ast.arg))
     bound.update(node.name for node in ast.walk(tree) if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)))
@@ -165,6 +239,7 @@ def encode_runtime(source):
                     aliases[old] = new
                     parts.append("%s = 引入(%r)" % (new, alias.name))
                 edits.append((start, end, '; '.join(parts)))
+                rewritten_import_ranges.append((start, end))
     proxies = set(aliases)
     for _ in range(len(tree.body) + 1):
         before = set(proxies)
@@ -188,10 +263,17 @@ def encode_runtime(source):
     for token in stream:
         start = positions[token.start[0] - 1] + token.start[1]
         end = positions[token.end[0] - 1] + token.end[1]
-        if token.type == tokenize.NAME and not any(a <= start < b for a, b in import_ranges):
+        if token.type == tokenize.NAME:
             name = token.string
+            if any(a <= start < b for a, b in import_ranges):
+                if name in keyword.kwlist and not any(a <= start < b for a, b in rewritten_import_ranges):
+                    edits.append((start, end, GRAMMAR[name]))
+                previous = token
+                continue
             replacement = name
-            if previous and previous.string == '.':
+            if name in keyword.kwlist or name in getattr(keyword, 'softkwlist', ()):
+                replacement = GRAMMAR[name]
+            elif previous and previous.string == '.':
                 if start in proxy_attributes:
                     replacement = VOCABULARY.get(name, name)
             elif name in aliases:
@@ -200,7 +282,7 @@ def encode_runtime(source):
                 replacement = CONSTANTS[name]
             elif name in BUILTINS and name not in bound:
                 replacement = BUILTINS[name]
-            if replacement != name and replacement not in occupied:
+            if replacement != name and (name in GRAMMAR or replacement not in occupied):
                 edits.append((start, end, replacement))
         if token.type not in (tokenize.COMMENT, tokenize.NL, tokenize.NEWLINE, tokenize.INDENT, tokenize.DEDENT):
             previous = token
@@ -214,7 +296,7 @@ def encode_runtime(source):
     imported = {replacement for _, _, replacement in edits if replacement in set(BUILTINS.values()) | set(CONSTANTS.values())}
     if aliases:
         imported.add('引入')
-    header = 'from senran import ' + ', '.join(sorted(imported)) + '\n' if imported else ''
+    header = '由 senran 納 ' + ', '.join(sorted(imported)) + '\n' if imported else ''
     if insertion and source[insertion - 1:insertion] != '\n':
         header = '\n' + header
     edits.append((insertion, insertion, header))
@@ -224,7 +306,8 @@ def encode_runtime(source):
         ledger.append([start + shift, replacement, source[start:end]])
         shift += len(replacement) - (end - start)
     body = patch(source, edits)
-    return seal(body, {'mode': 'runtime', 'edits': ledger, 'source_hash': digest(source)})
+    return seal(body, {'mode': 'runtime', 'source_language': source_language(source),
+                       'edits': ledger, 'source_hash': digest(source)})
 
 
 def decode_source(source):
@@ -234,6 +317,14 @@ def decode_source(source):
     if metadata.get('mode') == 'runtime':
         edits = [(start, start + len(changed), original) for start, changed, original in metadata['edits']]
     elif metadata.get('mode') == 'names':
+        if 'symbols' in metadata:
+            symbols = metadata['symbols']
+            edits = [(start, start + len(symbols[index][0]), symbols[index][1])
+                     for start, index in metadata['spans']]
+            original = patch(body, edits)
+            if digest(original) != metadata.get('source_hash'):
+                raise ValueError('森蚺名稱對照已損壞，還原校驗不符。')
+            return original
         names = metadata['names']
         ordered = list(names)
         if 'spans' in metadata:
@@ -249,3 +340,67 @@ def decode_source(source):
     if digest(original) != metadata.get('source_hash'):
         raise ValueError('森蚺名稱對照已損壞，還原校驗不符。')
     return original
+
+
+def to_python(source):
+    """將完整符節的白話／文言語法交還 Python；字串註解不動。"""
+    metadata, _ = unpack(source)
+    original = decode_source(source)
+    if original is not None:
+        if metadata.get('source_language', source_language(original)) == 'python':
+            return original
+        source = original
+    bound = set()
+    try:
+        tree = ast.parse(source)
+        bound = bindings(tree)
+    except SyntaxError:
+        pass
+    # 只採語法及現行內建函式；不將周蟒系統／回溯詞表當作語法。
+    aliases = {name: target for name, target in ZHPY_ALIASES.items()
+               if target in keyword.kwlist or target in {'self', 'not in', 'is not', '==', '!='}
+               or hasattr(builtins, target)}
+    aliases.update({value: key for key, value in GRAMMAR.items()})
+    aliases.update({value: key for key, value in BUILTINS.items()})
+    # 周蟒 Python 2 名稱在本庫改循 Python 3；不攜入舊執行器。
+    aliases.update({'檔案': 'open', '档案': 'open', '快速範圍': 'range', '快速范围': 'range'})
+    positions = offsets(source)
+    edits = []
+    previous = None
+    importing = False
+    stream = tokens(source)
+    for index, token in enumerate(stream):
+        if token.type == tokenize.NEWLINE or token.string == ';':
+            importing = False
+        if token.type != tokenize.NAME:
+            if token.type not in (tokenize.COMMENT, tokenize.NL, tokenize.INDENT, tokenize.DEDENT):
+                previous = token
+            continue
+        name = token.string
+        replacement = aliases.get(name, name)
+        if name in bound:
+            replacement = name
+        elif previous and previous.string == '.':
+            replacement = name
+        elif importing and replacement not in {'as', 'import'}:
+            replacement = name
+        elif name == '若' and replacement == 'if' and index + 1 < len(stream) and stream[index + 1].string == '(':
+            # 若(...) 可為舊式邏輯糖，也可為 if (...)；以閉括號後的冒號辨之。
+            depth = 0
+            for following_index in range(index + 1, len(stream)):
+                following = stream[following_index]
+                if following.string in {'(', '[', '{'}:
+                    depth += 1
+                elif following.string in {')', ']', '}'}:
+                    depth -= 1
+                    if depth == 0:
+                        if following_index + 1 >= len(stream) or stream[following_index + 1].string != ':':
+                            replacement = name
+                        break
+        if replacement == 'import':
+            importing = True
+        if replacement != name:
+            edits.append((positions[token.start[0] - 1] + token.start[1],
+                          positions[token.end[0] - 1] + token.end[1], replacement))
+        previous = token
+    return patch(source, edits)

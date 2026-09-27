@@ -27,7 +27,7 @@ def safe_path(name):
     return Path(*path.parts)
 
 
-def convert_repository(source, destination, mode):
+def convert_repository(source, destination, mode, style='senran'):
     """encode → format → unformat → decode；目的地必須不存在。"""
     source = Path(source).resolve(strict=True)
     destination = Path(destination).absolute()
@@ -43,7 +43,7 @@ def convert_repository(source, destination, mode):
     if mode == 'encode':
         if (source / MANIFEST).exists() or (source / MANIFEST).is_symlink():
             raise ValueError('來源已有森蚺封卷清冊。')
-        manifest = {'version': 1, 'stage': mode, 'python': []}
+        manifest = {'version': 1, 'stage': mode, 'style': style, 'python': []}
     else:
         manifest_path = source / MANIFEST
         if manifest_path.is_symlink():
@@ -134,7 +134,7 @@ def convert_repository(source, destination, mode):
                         encoding, text, text_only = 'latin-1', data.decode('latin-1'), True
                     if text.encode(encoding) != data:
                         raise ValueError('編碼不能逐位元組往返：' + key)
-                    encoded = encode_names(text).encode('utf-8')
+                    encoded = encode_names(text, style=style).encode('utf-8')
                     entry = {'original': key, 'current': key, 'encoding': encoding,
                              'text_only': text_only,
                              'original_hash': file_hash(data), 'current_hash': file_hash(encoded)}
@@ -191,11 +191,13 @@ def convert_repository(source, destination, mode):
 def main():
     import argparse
     parser = argparse.ArgumentParser(description='整庫無損四界轉錄（不執行專案）')
-    parser.add_argument('mode', choices=['encode', 'format', 'unformat', 'decode'])
+    parser.add_argument('mode', choices=['encode', 'encode-zhpy', 'format', 'unformat', 'decode'])
     parser.add_argument('source')
     parser.add_argument('destination')
     args = parser.parse_args()
-    report = convert_repository(args.source, args.destination, args.mode)
+    report = convert_repository(args.source, args.destination,
+                                'encode' if args.mode == 'encode-zhpy' else args.mode,
+                                style='zhpy' if args.mode == 'encode-zhpy' else 'senran')
     print(json.dumps(report, ensure_ascii=False))
 
 

@@ -170,6 +170,22 @@ def 轉西文(文言代碼: str) -> str:
     restored = decode_source(文言代碼)
     if restored is not None:
         return restored
+    from senran.codec import to_python, tokens
+    import ast
+    translated = to_python(文言代碼)
+    try:
+        ast.parse(文言代碼)
+    except SyntaxError:
+        # 手寫中文語法走符節翻譯，避免舊正則改動字串及註解。
+        ast.parse(translated)
+        return translated
+    stream = tokens(文言代碼)
+    legacy_import = any(token.string == '引入' and stream[index + 1].string == '('
+                        and (index == 0 or stream[index - 1].string != '.')
+                        for index, token in enumerate(stream[:-1]))
+    if translated != 文言代碼 and not legacy_import:
+        ast.parse(translated)
+        return translated
     # 舊式手寫代理體沒有原文紀錄；此路徑只提供詞律逆轉。
     # 處理 若().則().否則() 多行與單行轉為標準 if-else
     文言代碼 = re.sub(
