@@ -161,14 +161,35 @@ def main():
             parser = argparse.ArgumentParser(description="森蚺吟詠儀——執行 .md 駢儷賦體文卷")
             parser.add_argument("cmd", help="run / 吟")
             parser.add_argument("file", help="欲執行之 .md 賦體檔案路徑")
+            parser.add_argument('arguments', nargs=argparse.REMAINDER, help='傳給文卷的引數')
             args = parser.parse_args()
 
             with open(args.file, "r", encoding="utf-8", newline="") as f:
                 sr_text = f.read()
-            py_code = 解賦(sr_text) if args.file.lower().endswith('.md') else sr_text
+            from senran.bridge import is_packet
+            py_code = 解賦(sr_text) if args.file.lower().endswith('.md') and not is_packet(sr_text) else sr_text
             from senran.codec import to_python
-            exec(compile(to_python(py_code), args.file, 'exec'),
-                 {"__name__": "__main__", "__file__": args.file})
+            from pathlib import Path
+            from types import ModuleType
+            filename = str(Path(args.file).resolve())
+            old_argv, old_path = sys.argv, sys.path[:]
+            old_main = sys.modules.get('__main__')
+            module = ModuleType('__main__')
+            module.__file__ = filename
+            module.__package__ = None
+            module.__spec__ = None
+            try:
+                sys.argv = [filename, *args.arguments]
+                sys.path.insert(0, str(Path(filename).parent))
+                sys.modules['__main__'] = module
+                exec(compile(to_python(py_code), filename, 'exec'), module.__dict__)
+            finally:
+                sys.argv = old_argv
+                sys.path[:] = old_path
+                if old_main is None:
+                    sys.modules.pop('__main__', None)
+                else:
+                    sys.modules['__main__'] = old_main
             return
 
     # 預設轉錄模式 (化俗為雅)

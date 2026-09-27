@@ -172,20 +172,38 @@ def encode_names(source, style='senran'):
     edits = []
     dialect = {value: key for key, value in GRAMMAR.items()}
     dialect.update(ZHPY_ALIASES)
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', SyntaxWarning)
+            bound = bindings(ast.parse(source))
+    except (SyntaxError, ValueError, TypeError, SystemError, RecursionError):
+        bound = set()
+    importing = False
+    previous = ''
+    statement_start = True
     for token in tokens(source):
         name = token.string
+        native = dialect.get(name, name)
+        if token.type == tokenize.NEWLINE or name == ';':
+            importing = False
+            statement_start = True
+        if token.type == tokenize.NAME and native in {'from', 'import'} and statement_start:
+            importing = True
+        attribute = previous == '.'
+        if token.type not in {tokenize.NL, tokenize.COMMENT, tokenize.INDENT, tokenize.DEDENT}:
+            previous = name
+            if token.type != tokenize.NEWLINE and name != ';':
+                statement_start = False
         if token.type != tokenize.NAME or (name.startswith('__') and name.endswith('__')):
             continue
+        if importing or attribute:
+            continue
         if name not in mapping:
-            # 原名的 UTF-8 十六進位拼寫轉為漢字，名稱跨檔穩定且不相撞。
-            suffix = ''.join(HEX_DIGITS[int(digit, 16)] for digit in name.encode('utf-8').hex())
-            native = dialect.get(name, name)
-            base = VOCABULARY.get(native, '名')
             grammar = grammar_table.get(native)
-            if style == 'zhpy':
-                mapping[name] = grammar or PLAIN_NAMES.get(native, name)
-            else:
-                mapping[name] = grammar or (base if CANONICAL.get(base) == native and base not in GRAMMAR.values() else base + '之' + suffix)
+            names = PLAIN_NAMES if style == 'zhpy' else dict(BUILTINS, self='己')
+            mapping[name] = grammar or (names.get(native, name) if name not in bound or native == 'self' else name)
+        if mapping[name] == name:
+            continue
         edits.append((positions[token.start[0] - 1] + token.start[1],
                       positions[token.end[0] - 1] + token.end[1], mapping[name]))
     body = patch(source, edits)

@@ -38,6 +38,76 @@ CASES = [
 
 
 class LosslessTests(unittest.TestCase):
+    def test_readable_conversion_preserves_imports_and_foreign_names(self):
+        from senran.bridge import convert
+        source = 'import sys\nfrom pathlib import Path\nunknown = Path(__file__).parent\nprint(sys.path, unknown)\n'
+        for mode in ('transcribe', 'zhpy'):
+            body = convert(mode, source).split('\n', 1)[1]
+            self.assertIn('import sys\nfrom pathlib import Path\n', body)
+            self.assertIn('unknown = Path(__file__).parent', body)
+            self.assertIn('sys.path, unknown', body)
+            self.assertEqual(convert('reverse', convert(mode, source)), source)
+
+    def test_run_uses_packet_content_not_markdown_filename(self):
+        import subprocess
+        import sys
+        import tempfile
+        from pathlib import Path
+        from senran.bridge import convert
+        with tempfile.TemporaryDirectory() as temp:
+            file = Path(temp) / 'converted.md'
+            file.write_text(convert('transcribe', 'print(7)\n'))
+            result = subprocess.run([sys.executable, '-m', 'senran', 'run', str(file)],
+                                    capture_output=True, text=True)
+            self.assertEqual((result.returncode, result.stdout), (0, '7\n'), result.stderr)
+            self.assertEqual(result.stderr, '')
+
+    def test_run_preserves_script_imports_and_arguments_in_all_formats(self):
+        import itertools
+        import subprocess
+        import sys
+        import tempfile
+        from pathlib import Path
+        from senran.bridge import convert
+        from senran.codec import to_python
+        source = ('from __future__ import annotations\n'
+                  'import sys\nimport pickle\nfrom helper import answer\n'
+                  'class Box:\n    def value(self):\n        return answer\n'
+                  'print(pickle.loads(pickle.dumps(Box())).value(), sys.argv[1:])\n')
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / 'helper.py').write_text('answer = 42\n')
+            file = root / 'program.py'
+            file.write_text(source)
+            baseline = subprocess.run([sys.executable, str(file), 'hello'], capture_output=True, text=True)
+            self.assertEqual((baseline.returncode, baseline.stdout), (0, "42 ['hello']\n"), baseline.stderr)
+            for order in itertools.permutations(('transcribe', 'zhpy', 'format', 'reverse')):
+                text = source
+                previous = None
+                for target in order:
+                    from senran.formatter import 解賦
+                    if previous == 'format':
+                        text = 解賦(text)
+                    text = convert(target, text)
+                    previous = target
+                    executable = 解賦(text) if target == 'format' else text
+                    compile(to_python(executable), str(file), 'exec')
+                    file.write_text(text)
+                    path = file
+                    if target == 'format':
+                        path = root / 'program.md'
+                        path.write_text(text)
+                    result = subprocess.run([sys.executable, '-c',
+                        'from senran.transcriber import main; main()', 'run', str(path), 'hello'],
+                        capture_output=True, text=True)
+                    self.assertEqual((result.returncode, result.stdout),
+                                     (baseline.returncode, baseline.stdout), (order, target, result.stderr))
+                if order[-1] == 'format':
+                    text = convert('unformat', text)
+                restored = convert('reverse', text)
+                self.assertEqual(restored, source)
+                compile(restored, str(file), 'exec')
+
     def test_basic_syntax_is_classical_in_all_conversion_paths(self):
         from senran.codec import encode_names
         source = 'class Box:\n    def items(self):\n        for x in [True, None]:\n            if x is not None:\n                yield x\n        return False\n'

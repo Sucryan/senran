@@ -2,7 +2,7 @@
   "name": "senran-vscode",
   "displayName": "森蚺 (Senran) — 文言 Python 智囊輔助",
   "description": "以文言驅策萬象 Python 函式庫：提供古典詞律智慧補全、懸停解經與常用代碼片段",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "publisher": "sucryan",
   "license": "MIT",
   "icon": "icon.png",
@@ -27,7 +27,8 @@
     "onCommand:senran.transcribe",
     "onCommand:senran.toZhpy",
     "onCommand:senran.formatPianwen",
-    "onCommand:senran.toStandardPy"
+    "onCommand:senran.toStandardPy",
+    "onCommand:senran.runFile"
   ],
   "contributes": {
     "languages": [
@@ -52,6 +53,11 @@
       }
     ],
     "commands": [
+      {
+        "command": "senran.runFile",
+        "title": "森蚺：吟詠當前文卷（執行）",
+        "category": "森蚺 (Senran)"
+      },
       {
         "command": "senran.toZhpy",
         "title": "🗣️ 森蚺：轉換成周蟒（白話中文代碼）",
@@ -98,6 +104,11 @@
       ]
     },
     "keybindings": [
+      {
+        "command": "senran.runFile",
+        "key": "f5",
+        "when": "editorTextFocus && editorLangId == senran"
+      },
       {
         "command": "senran.transcribe",
         "key": "ctrl+alt+w",

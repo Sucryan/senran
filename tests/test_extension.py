@@ -39,21 +39,38 @@ const load = Module._load;
 const commands = new Map();
 const source = 'class Box:\n    def value(self):\n        return 3\n';
 const document = {value: source, languageId: 'python', version: 1,
+  fileName: '/tmp/a script.senran', isUntitled: false, async save() { return true; },
   getText() { return this.value; }, positionAt(n) { return n; }};
 const editor = {document, selection: {isEmpty: true},
   async edit(callback) { callback({replace(range, value) { document.value = value; document.version++; }}); }};
 let opened;
+const existing = {...document, value: '# senran-source-v1 {"mode":"names","style":"senran","source_hash":"a","body_hash":"b"}\n納 sys\n'};
+const ordinary = {...document, value: '# senran-source-v1 {"mode":"names"}\nprint(7)\n'};
+let task;
 const vscode = {CompletionItemKind: {}, Range: class {}, ViewColumn: {Beside: 2},
-  languages: {registerCompletionItemProvider() {}, registerHoverProvider() {}},
+  TaskScope: {Workspace: 1},
+  ProcessExecution: class {constructor(command, args) {this.command = command; this.args = args;}},
+  Task: class {constructor(definition, scope, name, source, execution) {this.execution = execution;}},
+  tasks: {async executeTask(value) {task = value;}},
+  languages: {registerCompletionItemProvider() {}, registerHoverProvider() {},
+    async setTextDocumentLanguage(doc, language) { doc.languageId = language; return doc; }},
   commands: {registerCommand(name, fn) { commands.set(name, fn); }},
-  workspace: {getConfiguration() { return {get() {return 'python3';}}; },
+  workspace: {textDocuments: [existing, ordinary], onDidOpenTextDocument() {},
+    getConfiguration() { return {get() {return 'python3';}}; },
     async openTextDocument(options) { opened = options.content; return options; }},
   window: {activeTextEditor: editor, showWarningMessage() {}, showInformationMessage() {},
     showErrorMessage(message) {throw Error(message);}, async showTextDocument() {}}};
 Module._load = function(name, ...args) { return name === 'vscode' ? vscode : load.call(this, name, ...args); };
 require('./vscode-extension/extension.js').activate({subscriptions: []});
 (async () => {
+  assert.equal(existing.languageId, 'senran');
+  assert.equal(ordinary.languageId, 'python');
   await commands.get('senran.toZhpy')();
+  assert.equal(document.languageId, 'senran');
+  assert.ok(commands.has('senran.runFile'));
+  await commands.get('senran.runFile')();
+  assert.equal(task.execution.command, 'python3');
+  assert.deepEqual(task.execution.args, ['-m', 'senran', 'run', document.fileName]);
   assert.match(document.value, /類別 Box:/);
   await commands.get('senran.transcribe')();
   assert.match(document.value, /類 /);
@@ -63,6 +80,7 @@ require('./vscode-extension/extension.js').activate({subscriptions: []});
   await commands.get('senran.formatPianwen')();
   document.value = opened;
   await commands.get('senran.toStandardPy')();
+  assert.equal(document.languageId, 'python');
   assert.equal(document.value, source);
 })();
 '''

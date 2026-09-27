@@ -83,7 +83,12 @@ class RepositoryTests(unittest.TestCase):
         source = 'value = 1\n"unfinished\nafter = 2\n'
         encoded = encode_names(source)
         self.assertEqual(decode_source(encoded), source)
-        self.assertNotIn('after', encoded.split('\n', 1)[1])
+        self.assertIn('after = 2', encoded.split('\n', 1)[1])
+
+    def test_cpython_nested_debug_fstring_parser_failure_is_archivable(self):
+        # CPython's corpus trips a ValueError in the Python 3.13 AST parser.
+        source = 'value = f"{C():{C():{4=}}}"\n'
+        self.assertEqual(decode_source(encode_names(source)), source)
 
     def test_form_feeds_are_not_line_breaks(self):
         source = 'before = 1\n\f\nafter = before\n'
@@ -94,8 +99,8 @@ class RepositoryTests(unittest.TestCase):
         encoded = encode_names(original)
         self.assertEqual(decode_source(encoded), original)
         body = encoded.split('\n', 1)[1]
-        self.assertNotIn('foo', body)
-        self.assertNotIn('abc', body)
+        self.assertIn('foo = abc.Bar(foo=1)', body)
+        self.assertIn('import abc', body)
 
     def test_modified_code_is_rejected(self):
         encoded = encode_names('x = 1\n')
