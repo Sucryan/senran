@@ -1,0 +1,57 @@
+{
+  "name": "senran-vscode",
+  "displayName": "森蚺 (Senran) — 文言 Python 智囊輔助",
+  "description": "以文言驅策萬象 Python 函式庫：提供古典詞律智慧補全、懸停解經與常用代碼片段",
+  "version": "0.1.0",
+  "publisher": "sucryan",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets"
+  ],
+  "keywords": [
+    "senran",
+    "wenyan",
+    "python",
+    "classical-chinese",
+    "snippets"
+  ],
+  "main": "./extension.js",
+  "activationEvents": [
+    "onLanguage:python",
+    "onLanguage:senran"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "senran",
+        "aliases": ["Senran", "森蚺", "文言Python"],
+        "extensions": [".sr", ".senran"]
+      }
+    ],
+    "grammars": [
+      {
+        "language": "senran",
+        "scopeName": "source.senran",
+        "path": "./syntaxes/senran.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "python",
+        "path": "./snippets/snippets.json"
+      },
+      {
+        "language": "senran",
+        "path": "./snippets/snippets.json"
+      }
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sucryan/senran"
+  }
+}

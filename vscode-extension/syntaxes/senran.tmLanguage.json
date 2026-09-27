@@ -1,0 +1,37 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Senran",
+  "scopeName": "source.senran",
+  "patterns": [
+    {
+      "include": "#constants"
+    },
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#functions"
+    },
+    {
+      "include": "#types"
+    }
+  ],
+  "repository": {
+    "constants": {
+      "match": "\\b(真|假|空|無)\\b",
+      "name": "constant.language.senran"
+    },
+    "keywords": {
+      "match": "\\b(引入|載|若|則|否則)\\b",
+      "name": "keyword.control.senran"
+    },
+    "functions": {
+      "match": "\\b(書|問|計|疇|總|求和|極大|極小|審|係|枚|並|序|反|啟|定)\\b",
+      "name": "support.function.senran"
+    },
+    "types": {
+      "match": "\\b(整|浮|文|字|節|錄|列|譜|集|偶)\\b",
+      "name": "storage.type.senran"
+    }
+  }
+}

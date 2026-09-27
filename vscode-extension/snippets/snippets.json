@@ -1,0 +1,131 @@
+{
+  "森蚺起手 (Senran Import)": {
+    "prefix": ["sr-init", "senran-init", "森蚺起手"],
+    "body": [
+      "from senran import 引入, 書, 計, 疇, 總, 序, 錄, 譜, 若, 真, 假",
+      ""
+    ],
+    "description": "引入森蚺核心典律與符節"
+  },
+  "几案印出 (Print)": {
+    "prefix": ["sr-print", "sr-shu", "書"],
+    "body": [
+      "書(${1:\"天地玄黃，宇宙洪荒。\"})"
+    ],
+    "description": "印出文字於几案終端 (print)"
+  },
+  "疆界循覽 (Range Loop)": {
+    "prefix": ["sr-loop", "sr-range", "疇"],
+    "body": [
+      "for ${1:數} in 疇(${2:1}, ${3:10}):",
+      "\t書(${1:數})"
+    ],
+    "description": "劃定數之疆界並循環遍歷 (range)"
+  },
+  "案牘閱覽 (Read File)": {
+    "prefix": ["sr-read", "sr-file-read", "閱卷"],
+    "body": [
+      "with 啟(\"${1:卷宗.txt}\", \"r\", encoding=\"utf-8\") as 牘:",
+      "\t文 = 牘.閱()",
+      "\t書(文)"
+    ],
+    "description": "以上下文管理器啟開卷宗並閱覽全文 (open read)"
+  },
+  "案牘題銘 (Write File)": {
+    "prefix": ["sr-write", "sr-file-write", "銘石"],
+    "body": [
+      "with 啟(\"${1:碑銘.txt}\", \"w\", encoding=\"utf-8\") as 牘:",
+      "\t牘.書(${2:\"天下大事，必作於細。\"})"
+    ],
+    "description": "以上下文管理器啟開卷宗並題銘落字 (open write)"
+  },
+  "雲端探訪 (HTTP Requests)": {
+    "prefix": ["sr-http", "sr-req", "雲端探訪"],
+    "body": [
+      "求 = 引入(\"requests\")",
+      "報 = 求.得(\"${1:https://httpbin.org/get}\")",
+      "書(\"驛報狀態格：\", 報.格)",
+      "書(\"驛使所帶之文：\", 報.文)",
+      "若(報.格 == 200).則(lambda: 書(\"探訪大吉！\"))"
+    ],
+    "description": "遣驛使前往雲端太虛探問 API (requests get)"
+  },
+  "矩陣算學 (NumPy Array)": {
+    "prefix": ["sr-numpy", "sr-array", "八卦陣"],
+    "body": [
+      "算矩 = 引入(\"numpy\")",
+      "陣 = 算矩.陣(${1:[[1, 2], [3, 4]]})",
+      "書(\"陣之形貌：\", 陣.形)",
+      "書(\"陣之均值：\", 陣.均())",
+      "書(\"陣之總和：\", 陣.總())"
+    ],
+    "description": "布列矩陣並度量均值總和 (NumPy)"
+  },
+  "卷帙統計 (Pandas DataFrame)": {
+    "prefix": ["sr-pandas", "sr-df", "卷帙名錄"],
+    "body": [
+      "史冊 = 引入(\"pandas\")",
+      "卷 = 史冊.DataFrame(${1:{\"名\": [\"李白\", \"杜甫\"], \"詩\": [1000, 1400]}})",
+      "書(\"卷帙列名：\", 卷.欄)",
+      "書(卷.冠(5))"
+    ],
+    "description": "造冊立表並觀覽首列 (Pandas)"
+  },
+  "神機求導 (PyTorch Autograd)": {
+    "prefix": ["sr-torch", "sr-autograd", "天機求勢"],
+    "body": [
+      "神算 = 引入(\"torch\")",
+      "權 = 神算.量([${1:2.0}], requires_grad=True)",
+      "損 = ${2:3 * (權 ** 2) + 5}",
+      "損.反溯()",
+      "書(\"反溯所得之梯度（勢）：\", 權.勢.析值())"
+    ],
+    "description": "布列可導張量並反溯求梯度 (PyTorch Autograd)"
+  },
+  "神經網絡鍛造 (PyTorch Neural Training)": {
+    "prefix": ["sr-nn", "sr-train", "演練絡層"],
+    "body": [
+      "神算 = 引入(\"torch\")",
+      "神兵 = 引入(\"torch.nn\")",
+      "調律 = 引入(\"torch.optim\")",
+      "",
+      "絡 = 引入(神兵.Linear(${1:1}, ${2:1}))",
+      "優化客 = 引入(調律.SGD(絡.本.parameters(), lr=${3:0.01}))",
+      "",
+      "for 輪 in 疇(1, ${4:51}):",
+      "\t優化客.清勢()",
+      "\t預測 = 絡(${5:輸入張量})",
+      "\t當前損 = ((預測 - ${6:真理目標}) ** 2).均()",
+      "\t當前損.反溯()",
+      "\t優化客.步進()",
+      "\tif 輪 % 10 == 0:",
+      "\t\t書(f\"第 {輪} 輪歷練，損耗：{當前損.析值():.4f}\")"
+    ],
+    "description": "以文言編寫完整的 PyTorch 深度神經網絡訓練迴圈"
+  },
+  "公堂定案 (SQLite Database)": {
+    "prefix": ["sr-sqlite", "sr-db", "公堂案台"],
+    "body": [
+      "庫 = 引入(\"sqlite3\")",
+      "連線 = 庫.通(\"${1::memory:}\")",
+      "案台 = 連線.案台()",
+      "案台.判詞(\"CREATE TABLE ${2:名錄} (${3:名 TEXT, 功 INT})\")",
+      "案台.判詞(\"INSERT INTO ${2:名錄} VALUES ('${4:關雲長}', ${5:99})\")",
+      "案台.判詞(\"SELECT * FROM ${2:名錄}\")",
+      "書(\"案台盡攬：\", 案台.盡攬())",
+      "連線.閉()"
+    ],
+    "description": "以文言操作 SQLite 資料庫 (connect, cursor, execute, fetchall)"
+  },
+  "明斷若則 (Conditional Sugar)": {
+    "prefix": ["sr-if", "若則"],
+    "body": [
+      "若(${1:條件}).則(",
+      "\tlambda: 書(\"${2:吉}\")",
+      ").否則(",
+      "\tlambda: 書(\"${3:凶}\")",
+      ")"
+    ],
+    "description": "古典若則條件流程控制"
+  }
+}

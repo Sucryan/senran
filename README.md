@@ -41,6 +41,17 @@ cd senran
 pip install -e .
 ```
 
+### 🧩 智囊伴侶：VSCode 專屬擴充套件（senran-vscode）
+
+為使諸位學士操鍵如撫琴、落字皆雅言，專案隨附 **VSCode 專屬智囊套件**（位於 `vscode-extension/`）：
+
+* ✨ **落字成章（智慧自動補全）**：輸入漢字或拼音（如鍵入 `shu` 提示 `書`、`fansu` 提示 `反溯`、`liang` 提示 `量`），自動帶出底層 Python 原語註釋。
+* 📜 **懸停解經（Hover Tooltips）**：滑鼠移至任一文言字詞，即刻顯現古典註解、Python 原語對照與用法範例。
+* ⚡ **通神符咒（Code Snippets）**：支援 `sr-init`（起手）、`sr-http`（雲端探訪）、`sr-torch`（深度神思）、`sr-file`（案牘卷宗）等一鍵展開。
+
+**一鍵載入法**：
+進入 VSCode 按下 `Ctrl+Shift+P` $\to$ 選取 `Extensions: Install from VSIX...` $\to$ 挑選 `vscode-extension/senran-vscode-0.1.0.vsix` 即可！
+
 ---
 
 ## 📖 九章演算法（使用範例）
