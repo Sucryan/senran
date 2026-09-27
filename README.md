@@ -128,7 +128,7 @@ senran 策問 "我想訓練神經網路計算梯度"
 * ⚡ **通神符咒（Code Snippets）**：支援 `sr-init`（起手）、`sr-http`（雲端探訪）、`sr-torch`（深度神思）、`sr-file`（案牘卷宗）等一鍵展開。
 
 **一鍵載入法**：
-進入 VSCode 按下 `Ctrl+Shift+P` $\to$ 選取 `Extensions: Install from VSIX...` $\to$ 挑選 `vscode-extension/senran-vscode-0.1.1.vsix` 即可！
+進入 VSCode 按下 `Ctrl+Shift+P` $\to$ 選取 `Extensions: Install from VSIX...` $\to$ 挑選 `vscode-extension/senran-vscode-0.1.4.vsix` 即可！
 
 ---
 
@@ -141,6 +141,19 @@ senran 策問 "我想訓練神經網路計算梯度"
   ```bash
   # 直接轉錄並存為新檔
   senran input.py -o refined.py
+  ```
+
+---
+
+### 🔄 化雅為俗：一鍵逆轉外邦代碼（Reverse Transpiler）
+
+若需將森蚺文言代碼交予西邦無文言支援之同仁或舊式環境，可隨時一鍵逆轉為標準原生 Python：
+
+* 🖱️ **VSCode 鼠標一鍵化俗**：在編輯器中對任意文言檔案按滑鼠右鍵，點擊 **「💻 森蚺：一鍵化雅為俗（逆轉為標準西邦代碼）」**（或快捷鍵 `Ctrl+Alt+E` / Mac `Cmd+Alt+E`），選取之處或全篇代碼即刻精準還原為原生 Python！
+* 💻 **終端命令列化西文**：
+  ```bash
+  # 將文言檔案逆轉為標準 Python 原碼
+  senran 化西文 refined.py -o standard.py
   ```
 
 ---

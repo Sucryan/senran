@@ -2,7 +2,7 @@
   "name": "senran-vscode",
   "displayName": "森蚺 (Senran) — 文言 Python 智囊輔助",
   "description": "以文言驅策萬象 Python 函式庫：提供古典詞律智慧補全、懸停解經與常用代碼片段",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "publisher": "sucryan",
   "license": "MIT",
   "engines": {
@@ -24,7 +24,8 @@
     "onLanguage:python",
     "onLanguage:senran",
     "onCommand:senran.transcribe",
-    "onCommand:senran.formatPianwen"
+    "onCommand:senran.formatPianwen",
+    "onCommand:senran.toStandardPy"
   ],
   "contributes": {
     "languages": [
@@ -48,6 +49,11 @@
         "category": "森蚺 (Senran)"
       },
       {
+        "command": "senran.toStandardPy",
+        "title": "💻 森蚺：一鍵化雅為俗（逆轉為標準西邦代碼）",
+        "category": "森蚺 (Senran)"
+      },
+      {
         "command": "senran.formatPianwen",
         "title": "📜 森蚺：賦體排版（化為 Markdown 駢儷文章）",
         "category": "森蚺 (Senran)"
@@ -61,15 +67,25 @@
           "group": "navigation@1"
         },
         {
-          "command": "senran.formatPianwen",
+          "command": "senran.toStandardPy",
           "when": "editorTextFocus",
           "group": "navigation@2"
+        },
+        {
+          "command": "senran.formatPianwen",
+          "when": "editorTextFocus",
+          "group": "navigation@3"
         }
       ],
       "editor/title": [
         {
           "command": "senran.transcribe",
           "when": "resourceLangId == python",
+          "group": "navigation"
+        },
+        {
+          "command": "senran.toStandardPy",
+          "when": "resourceLangId == python || resourceLangId == senran",
           "group": "navigation"
         },
         {
@@ -84,6 +100,12 @@
         "command": "senran.transcribe",
         "key": "ctrl+alt+w",
         "mac": "cmd+alt+w",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "senran.toStandardPy",
+        "key": "ctrl+alt+e",
+        "mac": "cmd+alt+e",
         "when": "editorTextFocus"
       },
       {

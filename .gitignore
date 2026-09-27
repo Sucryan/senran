@@ -39,3 +39,7 @@ examples/test.py
 .idea/
 .DS_Store
 *.swp
+
+# Internal Rules
+rules.md
+

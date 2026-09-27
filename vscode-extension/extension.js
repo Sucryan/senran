@@ -585,7 +585,37 @@ function activate(context) {
     vscode.window.showInformationMessage('📜【森蚺】駢儷賦體排印大成！已於側几展卷（Markdown 文卷）。');
   });
 
-  context.subscriptions.push(completionProvider, hoverProvider, transcribeCommand, formatPianwenCommand);
+  // 5. 一鍵化雅為俗（逆轉為標準西邦代碼）
+  const toStandardPyCommand = vscode.commands.registerCommand('senran.toStandardPy', async () => {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      vscode.window.showWarningMessage('【森蚺】未得開啟中之文卷（無作用中的編輯器）。');
+      return;
+    }
+
+    const document = editor.document;
+    const selection = editor.selection;
+
+    const isSelection = !selection.isEmpty;
+    const textToConvert = isSelection ? document.getText(selection) : document.getText();
+    const standardCode = reverseTranscribeCode(textToConvert);
+
+    await editor.edit(editBuilder => {
+      if (isSelection) {
+        editBuilder.replace(selection, standardCode);
+      } else {
+        const fullRange = new vscode.Range(
+          document.positionAt(0),
+          document.positionAt(document.getText().length)
+        );
+        editBuilder.replace(fullRange, standardCode);
+      }
+    });
+
+    vscode.window.showInformationMessage('💻【森蚺】化雅為俗大成！已將文言代碼逆轉為標準西邦代碼。');
+  });
+
+  context.subscriptions.push(completionProvider, hoverProvider, transcribeCommand, formatPianwenCommand, toStandardPyCommand);
 }
 
 // 轉錄詞律規則
@@ -811,6 +841,135 @@ function formatToPianwen(code) {
   pianwenLines.push("---");
   pianwenLines.push("*🪶【賦畢 · 算道咸吉】*");
   return pianwenLines.join("\n");
+}
+
+// 逆轉為西邦原碼詞律表 (Reverse Transcription)
+const REVERSE_TRANSCRIPTION_RULES = [
+  [/\b書\s*\(/g, "print("],
+  [/\b計\s*\(/g, "len("],
+  [/\b疇\s*\(/g, "range("],
+  [/\b總\s*\(/g, "sum("],
+  [/\b求和\s*\(/g, "sum("],
+  [/\b啟\s*\(/g, "open("],
+  [/\b問\s*\(/g, "input("],
+  [/\b序\s*\(/g, "sorted("],
+  [/\b反\s*\(/g, "reversed("],
+  [/\b審\s*\(/g, "type("],
+  [/\b係\s*\(/g, "isinstance("],
+
+  [/\b真\b/g, "True"],
+  [/\b假\b/g, "False"],
+  [/\b空\b/g, "None"],
+  [/\b無\b/g, "None"],
+
+  [/\.格\b/g, ".status_code"],
+  [/\.態\b/g, ".status_code"],
+  [/\.文\b/g, ".text"],
+  [/\.實\b/g, ".content"],
+  [/\.質\b/g, ".content"],
+  [/\.譜\s*\(\s*\)/g, ".json()"],
+  [/\.得\s*\(/g, ".get("],
+  [/\.取\s*\(/g, ".get("],
+  [/\.投\s*\(/g, ".post("],
+
+  [/\.反溯\s*\(\s*\)/g, ".backward()"],
+  [/\.溯\s*\(\s*\)/g, ".backward()"],
+  [/\.勢\b/g, ".grad"],
+  [/\.梯度\b/g, ".grad"],
+  [/\.清勢\s*\(\s*\)/g, ".zero_grad()"],
+  [/\.滌勢\s*\(\s*\)/g, ".zero_grad()"],
+  [/\.步進\s*\(\s*\)/g, ".step()"],
+  [/\.析值\s*\(\s*\)/g, ".item()"],
+  [/\.量\s*\(/g, ".tensor("],
+  [/\.矩積\s*\(/g, ".matmul("],
+  [/\.習\s*\(/g, ".fit("],
+  [/\.訓\s*\(/g, ".fit("],
+  [/\.卜\s*\(/g, ".predict("],
+  [/\.考分\s*\(/g, ".score("],
+
+  [/\.陣\s*\(/g, ".array("],
+  [/\.形\b/g, ".shape"],
+  [/\.均\s*\(\s*\)/g, ".mean()"],
+  [/\.皆零\s*\(/g, ".zeros("],
+  [/\.皆一\s*\(/g, ".ones("],
+  [/\.塑\s*\(/g, ".reshape("],
+  [/\.欄\b/g, ".columns"],
+  [/\.冠\s*\(/g, ".head("],
+  [/\.履\s*\(/g, ".tail("],
+  [/\.描述\s*\(\s*\)/g, ".describe()"],
+
+  [/\.閱\s*\(\s*\)/g, ".read()"],
+  [/\.書\s*\(/g, ".write("],
+  [/\.閉\s*\(\s*\)/g, ".close()"],
+  [/\.案台\s*\(\s*\)/g, ".cursor()"],
+  [/\.判詞\s*\(/g, ".execute("],
+  [/\.盡攬\s*\(\s*\)/g, ".fetchall()"],
+  [/\.攬一\s*\(\s*\)/g, ".fetchone()"],
+  [/\.立契\s*\(\s*\)/g, ".commit()"],
+
+  [/\.繪\s*\(/g, ".plot("],
+  [/\.布星\s*\(/g, ".scatter("],
+  [/\.題\s*\(/g, ".title("],
+  [/\.橫標\s*\(/g, ".xlabel("],
+  [/\.縱標\s*\(/g, ".ylabel("],
+  [/\.存圖\s*\(/g, ".savefig("],
+  [/\.展現\s*\(\s*\)/g, ".show()"]
+];
+
+const REVERSE_IMPORT_RULES = [
+  [/^(\w+)\s*=\s*引入\(['"]requests['"]\)/, (m, p1) => (p1 === 'requests' || p1 === '求') ? 'import requests' : `import requests as ${p1}`],
+  [/^(\w+)\s*=\s*引入\(['"]torch['"]\)/, (m, p1) => (p1 === 'torch' || p1 === '神算') ? 'import torch' : `import torch as ${p1}`],
+  [/^(\w+)\s*=\s*引入\(['"]numpy['"]\)/, (m, p1) => (p1 === 'numpy' || p1 === '算矩') ? 'import numpy' : `import numpy as ${p1}`],
+  [/^(\w+)\s*=\s*引入\(['"]pandas['"]\)/, (m, p1) => (p1 === 'pandas' || p1 === '史冊') ? 'import pandas' : `import pandas as ${p1}`],
+  [/^(\w+)\s*=\s*引入\(['"]sqlite3['"]\)/, (m, p1) => (p1 === 'sqlite3' || p1 === '庫') ? 'import sqlite3' : `import sqlite3 as ${p1}`],
+  [/^(\w+)\s*=\s*引入\(['"]json['"]\)/, (m, p1) => (p1 === 'json' || p1 === '法書') ? 'import json' : `import json as ${p1}`],
+  [/^(\w+)\s*=\s*引入\(['"]math['"]\)/, (m, p1) => (p1 === 'math' || p1 === '算術') ? 'import math' : `import math as ${p1}`],
+  [/^(\w+)\s*=\s*引入\(['"]matplotlib\.pyplot['"]\)/, (m, p1) => (p1 === 'plt' || p1 === '丹青') ? 'import matplotlib.pyplot as plt' : `import matplotlib.pyplot as ${p1}`],
+  [/^(\w+)\s*=\s*引入\(['"](.+?)['"]\)/, (m, p1, p2) => (p1 === p2) ? `import ${p2}` : `import ${p2} as ${p1}`]
+];
+
+function reverseTranscribeCode(code) {
+  let lines = code.split("\n");
+  let newLines = [];
+  let aliasMap = {};
+
+  for (let line of lines) {
+    let trimmed = line.trim();
+    if (trimmed.startsWith("from senran import") || trimmed.startsWith("import senran")) {
+      continue;
+    }
+
+    let matched = false;
+    for (let [pattern, repl] of REVERSE_IMPORT_RULES) {
+      if (pattern.test(trimmed)) {
+        if (/^求\s*=/.test(trimmed)) aliasMap["求"] = "requests";
+        if (/^神算\s*=/.test(trimmed)) aliasMap["神算"] = "torch";
+        if (/^算矩\s*=/.test(trimmed)) aliasMap["算矩"] = "numpy";
+        if (/^史冊\s*=/.test(trimmed)) aliasMap["史冊"] = "pandas";
+        if (/^庫\s*=/.test(trimmed)) aliasMap["庫"] = "sqlite3";
+        if (/^丹青\s*=/.test(trimmed)) aliasMap["丹青"] = "plt";
+
+        let indent = line.slice(0, line.length - line.trimStart().length);
+        newLines.push(indent + trimmed.replace(pattern, repl));
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) newLines.push(line);
+  }
+
+  let result = newLines.join("\n");
+
+  for (let [origVar, newVar] of Object.entries(aliasMap)) {
+    let reg = new RegExp(`\\b${origVar}\\.`, 'g');
+    result = result.replace(reg, `${newVar}.`);
+  }
+
+  for (let [pattern, repl] of REVERSE_TRANSCRIPTION_RULES) {
+    result = result.replace(pattern, repl);
+  }
+
+  return result.replace(/^\n+/, '');
 }
 
 function deactivate() {}
