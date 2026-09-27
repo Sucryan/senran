@@ -38,6 +38,149 @@ CASES = [
 
 
 class LosslessTests(unittest.TestCase):
+    def test_edited_packet_runs_current_body_without_claiming_original_restoration(self):
+        import subprocess
+        import sys
+        import tempfile
+        from pathlib import Path
+        from senran.bridge import convert
+        from senran.codec import decode_source
+        packet = convert('transcribe', 'value = 1\nprint(value)\n')
+        edited = packet.replace('value = 1', 'value = 2')
+        with tempfile.TemporaryDirectory() as temp:
+            file = Path(temp) / 'edited.py'
+            file.write_text(edited)
+            result = subprocess.run([sys.executable, '-m', 'senran', 'run', str(file)],
+                                    capture_output=True, text=True)
+            self.assertEqual((result.returncode, result.stdout), (0, '2\n'), result.stderr)
+        with self.assertRaises(ValueError):
+            decode_source(edited)
+        self.assertEqual(convert('reverse', edited), 'value = 2\nprint(value)\n')
+        for mode in ('transcribe', 'zhpy'):
+            self.assertEqual(convert('reverse', convert(mode, edited)), 'value = 2\nprint(value)\n')
+        self.assertEqual(convert('markdown-reverse', convert('format', edited)), 'value = 2\nprint(value)\n')
+
+    def test_edited_packet_can_add_explicit_senran_import(self):
+        from senran.bridge import convert
+        packet = convert('transcribe', 'print(1)\n')
+        header, body = packet.split('\n', 1)
+        edited = header + '\nfrom senran import 書\n' + body.replace('1', '2')
+        western = convert('reverse', edited)
+        namespace = {}
+        import contextlib
+        import io
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            exec(compile(western, '<edited>', 'exec'), namespace)
+        self.assertEqual(output.getvalue(), '2\n')
+        self.assertIn('書', namespace)
+
+    def test_edited_legacy_names_restore_attributes_and_reject_ambiguity(self):
+        from senran.codec import seal, to_python
+        body = '由 卷庫 納 徑類\n書(徑類("/a/b").父.name)\n'
+        metadata = {'mode': 'names', 'source_language': 'python', 'spans': [],
+                    'source_hash': 'old', 'symbols': [['由', 'from'], ['卷庫', 'pathlib'],
+                    ['納', 'import'], ['徑類', 'Path'], ['書', 'print'], ['父', 'parent']]}
+        packet = seal(body, metadata) + '# edited\n'
+        self.assertEqual(to_python(packet, editable=True),
+                         'from pathlib import Path\nprint(Path("/a/b").parent.name)\n# edited\n')
+        metadata['symbols'].append(['書', '書'])
+        with self.assertRaisesRegex(ValueError, '歧義'):
+            to_python(seal(body, metadata) + '# edited\n', editable=True)
+
+    def test_chinese_grammar_preserves_explicitly_imported_proxy_builtins(self):
+        import subprocess
+        import sys
+        import tempfile
+        from pathlib import Path
+        source = ('from senran import 啟, 書\n'
+                  '偕 啟(__file__, "r", encoding="utf-8") 作 牘:\n'
+                  '    內容 = 牘.閱()\n'
+                  '書("可閱"  若 內容 否則 "失敗")\n')
+        with tempfile.TemporaryDirectory() as temp:
+            file = Path(temp) / 'read.senran'
+            file.write_text(source)
+            result = subprocess.run([sys.executable, '-m', 'senran', 'run', str(file)],
+                                    capture_output=True, text=True)
+            self.assertEqual((result.returncode, result.stdout), (0, '可閱\n'), result.stderr)
+
+    def test_edited_runtime_packet_uses_current_proxy_program(self):
+        from senran.codec import decode_source, to_python
+        import contextlib
+        import io
+        packet = 化雅('import math\nprint(math.sqrt(4))\n')
+        edited = packet.replace('開方(4)', '開方(9)')
+        self.assertNotEqual(edited, packet)
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            exec(compile(to_python(edited, editable=True), '<edited>', 'exec'), {})
+        self.assertEqual(output.getvalue(), '3.0\n')
+        with self.assertRaises(ValueError):
+            decode_source(edited)
+
+    def test_from_import_preserves_chinese_module_name(self):
+        import subprocess
+        import sys
+        import tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            file = root / 'main.senran'
+            for module in ('書', '作為', '導入'):
+                (root / (module + '.py')).write_text('值 = 5\n')
+                file.write_text(f'from {module} import 值\n如果 真:\n    印出(值)\n')
+                result = subprocess.run([sys.executable, '-m', 'senran', 'run', str(file)],
+                                        capture_output=True, text=True)
+                self.assertEqual((result.returncode, result.stdout), (0, '5\n'), (module, result.stderr))
+
+    def test_edited_packet_keeps_new_proxy_import_and_attribute(self):
+        from senran.bridge import convert
+        import contextlib
+        import io
+        import tempfile
+        from pathlib import Path
+        packet = convert('transcribe', 'with open(__file__, encoding="utf-8") as f:\n    print(bool(f.read()))\n')
+        header, body = packet.split('\n', 1)
+        edited = header + '\nfrom senran import 啟\n' + body.replace('.read()', '.閱()')
+        with tempfile.TemporaryDirectory() as temp:
+            file = Path(temp) / 'hello.py'
+            file.write_text('readable')
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                exec(compile(convert('reverse', edited), str(file), 'exec'), {'__file__': str(file)})
+            self.assertEqual(output.getvalue(), 'True\n')
+        packet = convert('transcribe', 'print(1)\n')
+        header, body = packet.split('\n', 1)
+        edited = header + '\nimport senran\nsenran.書 = lambda x: "代理"\nresult = senran.書(2)\n'
+        import senran
+        from unittest.mock import patch
+        with patch.object(senran, '書'):
+            namespace = {}
+            exec(compile(convert('reverse', edited), '<edited>', 'exec'), namespace)
+            self.assertEqual(namespace['result'], '代理')
+
+    def test_edited_packet_keeps_new_local_binding(self):
+        from senran.bridge import convert
+        packet = convert('transcribe', 'print(1)\n')
+        header, body = packet.split('\n', 1)
+        edited = header + '\n書 = lambda x: x\nresult = 書(2)\n'
+        namespace = {}
+        exec(compile(convert('reverse', edited), '<edited>', 'exec'), namespace)
+        self.assertEqual(namespace['result'], 2)
+        self.assertNotIn('print', namespace)
+
+    def test_builtin_translation_does_not_collide_with_existing_chinese_variable(self):
+        from senran.bridge import convert
+        import contextlib
+        import io
+        source = '字串 = "原名"\nprint(str(1), 字串)\n'
+        packet = convert('zhpy', source) + '# edited\n'
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            exec(compile(convert('reverse', packet), '<edited>', 'exec'), {})
+        self.assertEqual(output.getvalue(), '1 原名\n')
+
+
     def test_readable_conversion_preserves_imports_and_foreign_names(self):
         from senran.bridge import convert
         source = 'import sys\nfrom pathlib import Path\nunknown = Path(__file__).parent\nprint(sys.path, unknown)\n'

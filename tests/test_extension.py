@@ -21,13 +21,12 @@ class ExtensionTests(unittest.TestCase):
         classical = convert('transcribe', plain)
         self.assertIn('術 ', classical.split('\n', 1)[1])
         self.assertEqual(convert('reverse', convert('zhpy', classical)), source)
-        with self.assertRaises(ValueError):
-            convert('zhpy', classical.replace('真', '假'))
-    def test_format_does_not_reseal_modified_packet(self):
+        edited = classical.replace('真', '假')
+        self.assertEqual(convert('reverse', convert('zhpy', edited)), source.replace('True', 'False'))
+    def test_format_reseals_current_revision_not_original(self):
         from senran.bridge import convert
         encoded = convert('transcribe', 'x = 1\n')
-        with self.assertRaises(ValueError):
-            convert('format', encoded.replace(' = 1', ' = 2'))
+        self.assertEqual(convert('markdown-reverse', convert('format', encoded.replace(' = 1', ' = 2'))), 'x = 2\n')
 
     @unittest.skipUnless(shutil.which('node'), '需要 Node.js 考校擴充介面')
     def test_registered_commands_convert_all_four_targets(self):
@@ -109,7 +108,7 @@ const {convertCode} = require('./vscode-extension/extension.js');
   assert.equal(await convertCode('unformat', poem), elegant);
   assert.equal(await convertCode('markdown-reverse', poem), source);
   await assert.rejects(convertCode('invalid', source));
-  await assert.rejects(convertCode('reverse', elegant.replace(' 1)', ' 2)')));
+  assert.equal(await convertCode('reverse', elegant.replace(' 1)', ' 2)')), source.replace(' 1)', ' 2)'));
 })();
 '''
         subprocess.run(['node', '-e', script], cwd=root, check=True, capture_output=True, text=True)

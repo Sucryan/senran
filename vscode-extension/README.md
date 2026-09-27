@@ -14,7 +14,8 @@
 此模式由 `senran run` 還原並執行，不宣稱直接交給原生 Python 即可執行任意文言化專案。
 在 Markdown 文卷上可轉周蟒、森蚺，或直接還原 Python。周蟒與森蚺互轉保留最初來源的還原契。
 右鍵「西文」對中文原稿翻譯語法，對 Python 原稿逐字還原；原稿還原 API 與整庫 decode 另保留中文原稿本身。
-駢文中的完整碼卷是還原來源；修改碼卷時會拒絕無損還原，正文修辭不影響單卷解賦。
+中文封卷修改後仍可吟詠與互轉，採目前正文重新封卷；未改封卷才保證逐字回到最初原稿。
+嚴格原稿還原 API／整庫 decode 仍驗校原卷。駢文碼塊的外層校驗亦保留，須先解賦成代碼後再編輯；正文修辭不影響單卷解賦。
 轉為中文後自動切至森蚺語言模式，還原西文則切回 Python。
 存檔後按 F5（僅森蚺模式），或由命令選單取「森蚺：吟詠當前文卷」，即由 `senran run` 編譯而行；Markdown 亦可用命令選單吟詠。
 勿用原生 Python 的執行按鈕直行中文卷。腳本引數可於終端傳入：`senran run file.senran argument`。
@@ -44,7 +45,7 @@
 ```bash
 npx @vscode/vsce package
 ```
-即可產出 `senran-vscode-0.1.8.vsix`，內含與 README 相同的專案圖示。
+即可產出 `senran-vscode-0.1.9.vsix`，內含與 README 相同的專案圖示。
 
 ### 2. 在 VSCode 中載入
 * 開啟 VSCode，按下 `Ctrl+Shift+P`（Mac 鍵為 `Cmd+Shift+P`）

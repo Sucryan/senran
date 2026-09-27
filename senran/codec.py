@@ -118,14 +118,14 @@ def seal(body, metadata):
     return MARKER + json.dumps(metadata, ensure_ascii=True, separators=(',', ':')) + '\n' + body
 
 
-def unpack(source):
+def unpack(source, *, verify_body=True):
     if not source.startswith(MARKER):
         return None, source
     line, separator, body = source.partition('\n')
     if not separator:
         raise ValueError('森蚺封卷不完整。')
     metadata = json.loads(line[len(MARKER):])
-    if metadata.get('body_hash') != digest(body):
+    if verify_body and metadata.get('body_hash') != digest(body):
         raise ValueError('森蚺碼已變更，不能聲稱逐字還原；請保留完整封卷。')
     return metadata, body
 
@@ -201,7 +201,10 @@ def encode_names(source, style='senran'):
         if name not in mapping:
             grammar = grammar_table.get(native)
             names = PLAIN_NAMES if style == 'zhpy' else dict(BUILTINS, self='己')
-            mapping[name] = grammar or (names.get(native, name) if name not in bound or native == 'self' else name)
+            translated = names.get(native, name) if name not in bound or native == 'self' else name
+            if translated != name and translated in bound:
+                translated = name
+            mapping[name] = grammar or translated
         if mapping[name] == name:
             continue
         edits.append((positions[token.start[0] - 1] + token.start[1],
@@ -214,7 +217,8 @@ def encode_names(source, style='senran'):
     for start, end, replacement in sorted(edits):
         spans.append([start + shift, indexes[source[start:end]]])
         shift += len(replacement) - (end - start)
-    return seal(body, {'mode': 'names', 'style': style, 'source_language': source_language(source),
+    return seal(body, {'mode': 'names', 'style': style, 'attributes_preserved': True,
+                       'source_language': source_language(source),
                        'symbols': [[mapping[name], name] for name in ordered],
                        'spans': spans, 'source_hash': digest(source)})
 
@@ -360,43 +364,139 @@ def decode_source(source):
     return original
 
 
-def to_python(source):
-    """將完整符節的白話／文言語法交還 Python；字串註解不動。"""
-    metadata, _ = unpack(source)
-    original = decode_source(source)
+def _edited_names(metadata, body, aliases):
+    if not isinstance(metadata.get('symbols'), list):
+        raise ValueError('此舊式封卷無可編輯名稱對照；請先從未修改的原卷還原。')
+    choices = {}
+    for pair in metadata['symbols']:
+        if (not isinstance(pair, list) or len(pair) != 2
+                or not all(isinstance(name, str) and name.isidentifier() for name in pair)):
+            raise ValueError('森蚺名稱對照已損壞。')
+        choices.setdefault(pair[0], set()).add(pair[1])
+    positions = offsets(body)
+    edits = []
+    stream = tokens(body)
+    grammar_aliases = {name: target for name, target in aliases.items()
+                       if target in keyword.kwlist + keyword.softkwlist
+                       or target in {'self', 'not in', 'is not', '==', '!='}}
+    bound = set()
+    imported = set()
+    try:
+        tree = ast.parse(_translate_names(body, grammar_aliases, set()))
+        bound = bindings(tree)
+        native_lines = {token.start[0] for token in stream
+                        if token.type == tokenize.NAME and token.string in {'from', 'import'}}
+        imported = {alias.asname or alias.name.split('.')[0]
+                    for node in ast.walk(tree)
+                    if isinstance(node, (ast.Import, ast.ImportFrom)) and node.lineno in native_lines
+                    for alias in node.names}
+    except SyntaxError:
+        pass
+    modern = metadata.get('attributes_preserved') is True
+    protected = bound if modern else imported
+    native_import = False
+    statement_start = True
+    previous = ''
+    for token in stream:
+        attribute = previous == '.'
+        if token.type not in {tokenize.NL, tokenize.COMMENT, tokenize.INDENT, tokenize.DEDENT}:
+            previous = token.string
+        if token.type == tokenize.NEWLINE or token.string == ';':
+            native_import = False
+            statement_start = True
+        if token.type == tokenize.NAME and statement_start and token.string in {'from', 'import'}:
+            native_import = True
+        if token.type not in {tokenize.NL, tokenize.COMMENT, tokenize.INDENT, tokenize.DEDENT, tokenize.NEWLINE} and token.string != ';':
+            statement_start = False
+        if native_import:
+            continue
+        if token.type != tokenize.NAME or token.string not in choices:
+            continue
+        if modern and attribute:
+            continue
+        originals = choices[token.string]
+        if len(originals) != 1:
+            raise ValueError('已編輯封卷有歧義名稱：' + token.string)
+        if token.string in protected and originals != {'self'}:
+            continue
+        original_name = next(iter(originals))
+        if not modern and token.string in bound and original_name in BUILTINS:
+            raise ValueError('舊式封卷有歧義綁定：' + token.string)
+        edits.append((positions[token.start[0] - 1] + token.start[1],
+                      positions[token.end[0] - 1] + token.end[1], original_name))
+    return patch(body, edits)
+
+
+def to_python(source, *, editable=False):
+    """嚴格還原原卷；可編輯入口則翻譯目前正文，不聲稱回復舊稿。"""
+    aliases = _dialect_aliases()
+    metadata, body = unpack(source, verify_body=not editable)
+    changed = metadata is not None and metadata.get('body_hash') != digest(body)
+    if changed:
+        if metadata.get('mode') == 'names':
+            source = _edited_names(metadata, body, aliases)
+        elif metadata.get('mode') == 'runtime':
+            # 當前代理體已自帶匯入；不將舊座標帳本套在新稿上。
+            source = body
+        else:
+            raise ValueError('未知森蚺封卷版本。')
+        original = None
+    else:
+        original = decode_source(source)
     if original is not None:
         if metadata.get('source_language', source_language(original)) == 'python':
             return original
         source = original
     bound = set()
     try:
-        tree = ast.parse(source)
-        bound = bindings(tree)
+        bound = bindings(ast.parse(source))
     except SyntaxError:
-        pass
-    # 只採語法及現行內建函式；不將周蟒系統／回溯詞表當作語法。
+        # 先只譯語法，再辨認明確匯入的函式，免將代理啟()誤換成原生 open()。
+        grammar_aliases = {name: target for name, target in aliases.items()
+                           if target in keyword.kwlist + keyword.softkwlist
+                           or target in {'self', 'not in', 'is not', '==', '!='}}
+        grammar_source = _translate_names(source, grammar_aliases, set())
+        try:
+            bound = bindings(ast.parse(grammar_source))
+            source = grammar_source
+        except SyntaxError:
+            pass
+    return _translate_names(source, aliases, bound)
+
+
+def _dialect_aliases():
+    """語法及現行 Python 內建詞；不攜周蟒舊執行器。"""
     aliases = {name: target for name, target in ZHPY_ALIASES.items()
                if target in keyword.kwlist or target in {'self', 'not in', 'is not', '==', '!='}
                or hasattr(builtins, target)}
     aliases.update({value: key for key, value in GRAMMAR.items()})
     aliases.update({value: key for key, value in BUILTINS.items()})
-    # 周蟒 Python 2 名稱在本庫改循 Python 3；不攜入舊執行器。
     aliases.update({'檔案': 'open', '档案': 'open', '快速範圍': 'range', '快速范围': 'range'})
+    return aliases
+
+
+def _translate_names(source, aliases, bound):
+    """只改符節，不碰字串、註解及外部屬性。"""
     positions = offsets(source)
     edits = []
     previous = None
     importing = False
+    native_import = False
     stream = tokens(source)
     for index, token in enumerate(stream):
         if token.type == tokenize.NEWLINE or token.string == ';':
             importing = False
+            native_import = False
         if token.type != tokenize.NAME:
             if token.type not in (tokenize.COMMENT, tokenize.NL, tokenize.INDENT, tokenize.DEDENT):
                 previous = token
             continue
         name = token.string
         replacement = aliases.get(name, name)
-        if name in bound:
+        at_start = previous is None or previous.type == tokenize.NEWLINE or previous.string in {';', ':'}
+        if at_start and name in {'from', 'import'}:
+            native_import = True
+        if native_import or name in bound:
             replacement = name
         elif previous and previous.string == '.':
             replacement = name
@@ -415,7 +515,8 @@ def to_python(source):
                         if following_index + 1 >= len(stream) or stream[following_index + 1].string != ':':
                             replacement = name
                         break
-        if replacement == 'import':
+        if replacement == 'import' or (replacement == 'from' and
+                (previous is None or previous.type == tokenize.NEWLINE or previous.string in {';', ':'})):
             importing = True
         if replacement != name:
             edits.append((positions[token.start[0] - 1] + token.start[1],

@@ -182,7 +182,7 @@ def main():
                 sys.argv = [filename, *args.arguments]
                 sys.path.insert(0, str(Path(filename).parent))
                 sys.modules['__main__'] = module
-                exec(compile(to_python(py_code), filename, 'exec'), module.__dict__)
+                exec(compile(to_python(py_code, editable=True), filename, 'exec'), module.__dict__)
             finally:
                 sys.argv = old_argv
                 sys.path[:] = old_path

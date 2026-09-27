@@ -2,7 +2,7 @@
 import json
 import sys
 
-from senran.codec import encode_names, unpack, decode_source, to_python, MARKER
+from senran.codec import encode_names, unpack, decode_source, to_python, MARKER, digest, source_language
 from senran.transcriber import 化雅
 from senran.agent import 轉西文
 from senran.formatter import 賦體, 解賦
@@ -20,13 +20,22 @@ def is_packet(code):
 
 
 def convert(mode, code):
+    # 編輯後視為新稿；原稿的逐字還原仍由嚴格 decode_source 守護。
+    if mode in {'transcribe', 'zhpy', 'reverse', 'format'} and is_packet(code):
+        metadata, body = unpack(code, verify_body=False)
+        if metadata['body_hash'] != digest(body):
+            code = to_python(code, editable=True)
+            if mode == 'reverse':
+                return code
     if mode in {'transcribe', 'zhpy'}:
         original = decode_source(code) if is_packet(code) else code
         return encode_names(original, style='zhpy' if mode == 'zhpy' else 'senran')
     if mode == 'proxy':
         return 化雅(code)
     if mode == 'reverse':
-        return to_python(code) if is_packet(code) else 轉西文(code)
+        if is_packet(code):
+            return to_python(code)
+        return code if source_language(code) == 'python' else 轉西文(code)
     if mode == 'format':
         sealed = is_packet(code)
         if sealed:

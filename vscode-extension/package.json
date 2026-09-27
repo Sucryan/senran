@@ -2,7 +2,7 @@
   "name": "senran-vscode",
   "displayName": "森蚺 (Senran) — 文言 Python 智囊輔助",
   "description": "以文言驅策萬象 Python 函式庫：提供古典詞律智慧補全、懸停解經與常用代碼片段",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "publisher": "sucryan",
   "license": "MIT",
   "icon": "icon.png",
