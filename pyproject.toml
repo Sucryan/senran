@@ -27,3 +27,6 @@ Repository = "https://github.com/sucryan/senran"
 
 [tool.setuptools]
 packages = ["senran", "senran.scrolls"]
+
+[project.scripts]
+senran = "senran.transcriber:main"

@@ -4,7 +4,7 @@
 
 [![授權條款：MIT](https://img.shields.io/badge/授權-MIT-yellow.svg)](LICENSE)
 [![版本：Python 3.8+](https://img.shields.io/badge/法度-Python%203.8+-blue.svg)](https://www.python.org/)
-[![考校：皆備](https://img.shields.io/badge/考校-二十七試咸吉-brightgreen.svg)]()
+[![考校：皆備](https://img.shields.io/badge/考校-三十試咸吉-brightgreen.svg)]()
 
 ---
 
@@ -51,6 +51,19 @@ pip install -e .
 
 **一鍵載入法**：
 進入 VSCode 按下 `Ctrl+Shift+P` $\to$ 選取 `Extensions: Install from VSIX...` $\to$ 挑選 `vscode-extension/senran-vscode-0.1.0.vsix` 即可！
+
+---
+
+### 🔄 化俗為雅：一鍵文言轉錄儀（Transpiler）
+
+習於西邦法度者，不必強記文言符節。森蚺自帶**一鍵轉錄儀**，將尋常 Python 秒化為古雅文章：
+
+* 🖱️ **VSCode 鼠標一鍵化雅**：在編輯器中對任意 Python 檔案按滑鼠右鍵，點擊 **「🐍 森蚺：一鍵化俗為雅（轉錄為文言代碼）」**（或快捷鍵 `Ctrl+Alt+W` / Mac `Cmd+Alt+W`），選取之處或全篇代碼即刻轉為文言！
+* 💻 **終端命令列轉錄**：
+  ```bash
+  # 直接轉錄並存為新檔
+  senran input.py -o refined.py
+  ```
 
 ---
 
