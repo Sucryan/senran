@@ -4,7 +4,7 @@
 
 [![授權條款：MIT](https://img.shields.io/badge/授權-MIT-yellow.svg)](LICENSE)
 [![版本：Python 3.8+](https://img.shields.io/badge/法度-Python%203.8+-blue.svg)](https://www.python.org/)
-[![考校：皆備](https://img.shields.io/badge/考校-二十一試咸吉-brightgreen.svg)]()
+[![考校：皆備](https://img.shields.io/badge/考校-二十七試咸吉-brightgreen.svg)]()
 
 ---
 
@@ -147,6 +147,43 @@ with 啟("銘刻.txt", "r", encoding="utf-8") as 牘:
 
 ---
 
+### 卷之五【盈不足】—— 天機神思，反溯知微（PyTorch 深度學習）
+> **今有神經絡層，欲窮天機之理，初始權重或盈或不足。問：何以修為，使損耗歸無？**  
+> **術曰：布列張量，前行推演，反溯求勢，精進步新。**
+
+```python
+from senran import 引入, 書, 疇
+
+神算 = 引入("torch")
+神兵 = 引入("torch.nn")
+調律 = 引入("torch.optim")
+
+# 1. 自動求導 (Autograd)
+# 設權重 w=2.0, 求 f(w) = 3 * w^2 + 5 之梯度 (df/dw = 6*w = 12.0)
+權 = 神算.量([2.0], requires_grad=True)
+損 = 3 * (權 ** 2) + 5
+損.反溯() # backward()
+書("反溯求勢所得（梯度）：", 權.勢.析值()) # grad.item() -> 12.0
+
+# 2. 神經網絡鍛造 (Neural Network Training)
+絡 = 引入(神兵.Linear(1, 1))
+優化客 = 引入(調律.SGD(絡.本.parameters(), lr=0.01))
+
+x = 神算.量([[1.0], [2.0], [3.0]])
+y = 神算.量([[2.0], [4.0], [6.0]])
+
+for 輪 in 疇(1, 51):
+    優化客.清勢()          # zero_grad()
+    預測 = 絡(x)           # forward
+    當前損 = ((預測 - y) ** 2).均()
+    當前損.反溯()          # backward()
+    優化客.步進()          # step()
+
+書("歷練圓滿，推測 x=4 之數：", 絡(神算.量([[4.0]])).析值())
+```
+
+---
+
 ## 📑 典律總目（常用文言對照）
 
 森蚺體察古今，定常用之符節如下：
@@ -161,7 +198,11 @@ with 啟("銘刻.txt", "r", encoding="utf-8") as 牘:
 | **驛報** | `格`、`態`、`文`、`實`、`譜` | `status_code`、`text`、`content`、`json` | requests, urllib |
 | **矩陣** | `陣`、`形`、`均`、`和`、`塑`、`皆零` | `array`、`shape`、`mean`、`sum`、`reshape`、`zeros`| numpy, scipy |
 | **卷帙** | `欄`、`冠`、`履`、`描述`、`依序` | `columns`、`head`、`tail`、`describe`、`sort_values`| pandas, polars |
+| **天機** | `量`、`勢`、`反溯`、`清勢`、`步進`、`析值` | `tensor`、`grad`、`backward`、`zero_grad`、`step`、`item` | PyTorch, TensorFlow |
+| **機心** | `習`、`訓`、`卜`、`斷`、`考分`、`習化` | `fit`、`train`、`predict`、`score`、`fit_transform` | scikit-learn, XGBoost |
+| **丹青** | `繪`、`布星`、`立柱`、`題`、`存圖` | `plot`、`scatter`、`bar`、`title`、`savefig` | matplotlib, seaborn |
 | **案牘** | `啟`、`閱`、`書`、`閉`、`通`、`判詞` | `open`、`read`、`write`、`close`、`connect`、`execute`| io, os, sqlite3 |
+| **行者** | `歷程`、`行者`、`化規` | `tqdm`、`model_dump` | tqdm, pydantic |
 | **律則** | `為_*`、`化_*`、`取_*`、`設_*` | `is_*`、`to_*`、`get_*`、`set_*` | 萬用前綴自動轉譯 |
 
 > **注**：凡未及備載之冷僻西域名稱，森蚺皆直接放行相容。若誤筆求不可得之物，森蚺必自省其身，出古典之辭指引相近字，絕無窒礙。
@@ -170,12 +211,12 @@ with 啟("銘刻.txt", "r", encoding="utf-8") as 牘:
 
 ## 🧪 考校明察（測試驗證）
 
-本卷內蘊二十一項法度考校，以驗算理之精微：
+本卷內蘊二十七項法度考校，以驗算理之精微：
 
 ```bash
 python3 -m unittest discover -s tests -v
 ```
-> 報曰：`Ran 21 tests ... OK`，諸法咸吉。
+> 報曰：`Ran 27 tests ... OK`，諸法咸吉。
 
 ---
 

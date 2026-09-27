@@ -5,7 +5,7 @@
 
 import difflib
 from typing import Any, List, Optional
-from senran.dictionary import ALL_LEXICON, PREFIX_RULES, REVERSE_LEXICON
+from senran.dictionary import ALL_LEXICON, PREFIX_RULES, REVERSE_LEXICON, SYNONYMS
 
 
 def resolve_attribute_name(target: Any, name: str) -> Optional[str]:
@@ -13,19 +13,26 @@ def resolve_attribute_name(target: Any, name: str) -> Optional[str]:
     根據目標物件 target 與傳入的名稱 name，推導出真正的 Python 屬性名稱。
     
     推導優先級：
-    1. 原名直取（若本身就是底層既有屬性，或完全匹配英文名）
+    1. 同義詞候選表優先比對（SYNONYMS: 一對多候選，如 習 -> [fit, train]）
     2. 全域詞典精準匹配（ALL_LEXICON: 單詞與常用複合詞）
-    3. 前綴規則匹配（如「為_」->「is_」、「化_」->「to_」等）
-    4. 復合分解匹配（如「取_狀態」->「get_status」）
-    5. 目標物件現有屬性之語義推斷（檢查 dir(target) 中的方法是否對應翻譯）
+    3. 原名直取（若本身就是底層既有屬性，或完全匹配英文名）
+    4. 前綴規則匹配（如「為_」->「is_」、「化_」->「to_」等）
+    5. 復合分解匹配（如「取_狀態」->「get_status」）
+    6. 目標物件現有屬性之語義推斷（檢查 dir(target) 中的方法是否對應翻譯）
     """
-    # 1. 若該名稱為全域詞典精準收錄之文言詞彙，優先查核目標物件是否具備對應英文屬性
+    # 1. 多義候選詞表比對（如 習: [fit, train], 卜: [predict, inference]）
+    if name in SYNONYMS:
+        for candidate in SYNONYMS[name]:
+            if hasattr(target, candidate):
+                return candidate
+
+    # 2. 若該名稱為全域詞典精準收錄之文言詞彙，優先查核目標物件是否具備對應英文屬性
     if name in ALL_LEXICON:
         candidate = ALL_LEXICON[name]
         if hasattr(target, candidate):
             return candidate
 
-    # 2. 原名直取（若本身就是底層原生屬性，例如調用原庫英文名或自定義屬性）
+    # 3. 原名直取（若本身就是底層原生屬性，例如調用原庫英文名或自定義屬性）
     if hasattr(target, name):
         return name
 

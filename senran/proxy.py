@@ -180,3 +180,32 @@ class SenranProxy:
 
     def __pow__(self, other: Any) -> Any:
         return 裹(self._target ** 剖(other))
+
+    # 反向運算子 (Reflected / Right-hand operators)
+    def __radd__(self, other: Any) -> Any:
+        return 裹(剖(other) + self._target)
+
+    def __rsub__(self, other: Any) -> Any:
+        return 裹(剖(other) - self._target)
+
+    def __rmul__(self, other: Any) -> Any:
+        return 裹(剖(other) * self._target)
+
+    def __rtruediv__(self, other: Any) -> Any:
+        return 裹(剖(other) / self._target)
+
+    def __rfloordiv__(self, other: Any) -> Any:
+        return 裹(剖(other) // self._target)
+
+    def __rmod__(self, other: Any) -> Any:
+        return 裹(剖(other) % self._target)
+
+    def __rpow__(self, other: Any) -> Any:
+        return 裹(剖(other) ** self._target)
+
+    # 矩陣乘法運算子 (@ / matmul)
+    def __matmul__(self, other: Any) -> Any:
+        return 裹(self._target @ 剖(other))
+
+    def __rmatmul__(self, other: Any) -> Any:
+        return 裹(剖(other) @ self._target)

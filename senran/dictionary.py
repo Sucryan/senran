@@ -95,7 +95,7 @@ VERBS: Dict[str, str] = {
     "待": "wait",
     "聚": "gather",
 
-    # 數學、科學與機器學習
+    # 數學、科學與機器學習 / 深度學習
     "算": "calculate",
     "積": "dot",
     "塑": "reshape",
@@ -111,6 +111,18 @@ VERBS: Dict[str, str] = {
     "載": "load",
     "卸": "dump",
     "傾": "dump",
+    "溯": "backward",
+    "反溯": "backward",
+    "步": "step",
+    "進": "step",
+    "拘": "clamp",
+    "相": "view",
+    "斂": "squeeze",
+    "展維": "unsqueeze",
+    "繪": "plot",
+    "展": "show",
+    "摹": "savefig",
+    "圖": "plot",
 }
 
 # ==========================================
@@ -183,6 +195,39 @@ NOUNS: Dict[str, str] = {
     "鍵": "keys",
     "物": "values",
     "項": "items",
+
+    # 機器學習、神經網絡與張量 (torch, sklearn, transformers...)
+    "量": "tensor",
+    "張量": "tensor",
+    "勢": "grad",
+    "梯度": "grad",
+    "損": "loss",
+    "耗": "loss",
+    "參量": "parameters",
+    "參數": "parameters",
+    "權": "weight",
+    "權重": "weight",
+    "偏": "bias",
+    "偏置": "bias",
+    "神譜": "state_dict",
+    "道印": "state_dict",
+    "法度": "criterion",
+    "準則": "criterion",
+    "精進器": "optimizer",
+    "調率客": "optimizer",
+    "步長": "lr",
+    "輪": "epoch",
+    "器": "device",
+    "機台": "device",
+    "神機": "cuda",
+
+    # 視覺與畫幅 (matplotlib, PIL)
+    "題": "title",
+    "標題": "title",
+    "橫標": "xlabel",
+    "縱標": "ylabel",
+    "圖記": "legend",
+    "畫幅": "figure",
 }
 
 # ==========================================
@@ -250,6 +295,50 @@ COMPOUNDS: Dict[str, str] = {
     "隨選": "choice",
     "拈號": "randint",
     "洗牌": "shuffle",
+
+    # 深度學習與機器學習 (PyTorch / Sklearn / Transformers)
+    "反向傳播": "backward",
+    "反向": "backward",
+    "清勢": "zero_grad",
+    "滌勢": "zero_grad",
+    "零勢": "zero_grad",
+    "步進": "step",
+    "析值": "item",
+    "矩積": "matmul",
+    "陣乘": "matmul",
+    "隨量": "randn",
+    "漫量": "randn",
+    "隨機張量": "randn",
+    "皆零張量": "zeros",
+    "皆一張量": "ones",
+    "神兵可用": "is_available",
+    "神機可用": "is_available",
+    "載神譜": "load_state_dict",
+    "置於": "to",
+    "轉為": "to",
+    "擬合": "fit",
+    "推測": "predict",
+    "卜率": "predict_proba",
+    "習化": "fit_transform",
+    "考分": "score",
+
+    # 繪圖與視覺 (Matplotlib / OpenCV / PIL)
+    "布星": "scatter",
+    "散點": "scatter",
+    "立柱": "bar",
+    "頻圖": "hist",
+    "展現": "show",
+    "展圖": "show",
+    "存圖": "savefig",
+    "摹卷": "savefig",
+    "閱圖": "imread",
+    "書圖": "imwrite",
+    "畫幅": "figure",
+
+    # 現代管線 (tqdm, pydantic)
+    "歷程": "tqdm",
+    "行者": "tqdm",
+    "化規": "model_dump",
 }
 
 # ==========================================
@@ -277,7 +366,37 @@ ALL_LEXICON.update(VERBS)
 ALL_LEXICON.update(NOUNS)
 ALL_LEXICON.update(COMPOUNDS)
 
+# 多義候選詞表（一中對多英，依序比對目標物件具備之方法）
+SYNONYMS: Dict[str, List[str]] = {
+    "習": ["fit", "train"],
+    "訓": ["fit", "train"],
+    "卜": ["predict", "inference"],
+    "斷": ["predict", "inference"],
+    "得": ["get", "fetch"],
+    "取": ["get", "fetch"],
+    "投": ["post", "send"],
+    "寄": ["send", "post"],
+    "書": ["write", "save", "dump", "savefig"],
+    "閱": ["read", "load", "imread"],
+    "閉": ["close", "exit"],
+    "量": ["tensor", "array"],
+    "張量": ["tensor", "array"],
+    "陣": ["array", "tensor"],
+    "格": ["status_code", "code"],
+    "態": ["status_code", "code"],
+    "文": ["text", "content"],
+    "質": ["content", "text"],
+    "實": ["content", "text"],
+    "勢": ["grad", "slope"],
+    "梯度": ["grad"],
+    "考分": ["score", "evaluate"],
+}
+
 # 反向查詢表 (用於偵錯與提示：English -> [Chinese aliases])
 REVERSE_LEXICON: Dict[str, List[str]] = {}
 for zh, en in ALL_LEXICON.items():
     REVERSE_LEXICON.setdefault(en.lower(), []).append(zh)
+for zh, ens in SYNONYMS.items():
+    for en in ens:
+        if zh not in REVERSE_LEXICON.setdefault(en.lower(), []):
+            REVERSE_LEXICON[en.lower()].append(zh)

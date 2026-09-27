@@ -134,12 +134,14 @@ def 定(條件: Any, 告誡: str = "明斷有誤"):
 class _ModuleImporter:
     """支援 引入('requests') 亦支援 引入.requests 的萬能引進器"""
     
-    def __call__(self, 模組名: str) -> SenranProxy:
-        try:
-            mod = importlib.import_module(模組名)
-            return 裹(mod)
-        except ImportError as e:
-            raise ImportError(f"森蚺通譯未能在行囊中尋得庫【{模組名}】。請先以 pip 置辦之：{e}")
+    def __call__(self, 標的: Any) -> SenranProxy:
+        if isinstance(標的, str):
+            try:
+                mod = importlib.import_module(標的)
+                return 裹(mod)
+            except ImportError as e:
+                raise ImportError(f"森蚺通譯未能在行囊中尋得庫【{標的}】。請先以 pip 置辦之：{e}")
+        return 裹(標的)
 
     def __getattr__(self, name: str) -> SenranProxy:
         return self(name)
