@@ -23,15 +23,17 @@ class PianwenFormatter(ast.NodeVisitor):
 
     def format(self, source_code: str) -> str:
         self.lines = [
-            "# ─── 📜【森蚺駢儷憲典 · 賦體卷】───",
-            "# 夫運籌於帷幄之中，決勝於方寸之間。",
+            "# 📜【森蚺駢儷憲典 · 賦體卷】",
+            "",
+            "> 夫運籌於帷幄之中，決勝於方寸之間。",
             ""
         ]
         tree = ast.parse(source_code)
         for node in tree.body:
             self.visit(node)
         self.lines.append("")
-        self.lines.append("# ─── 🪶【賦畢 · 算道咸吉】───")
+        self.lines.append("---")
+        self.lines.append("*🪶【賦畢 · 算道咸吉】*")
         return "\n".join(self.lines)
 
     def visit_Import(self, node: ast.Import):
@@ -120,7 +122,7 @@ def 賦體(代碼: str) -> str:
 
 def 解賦(駢文: str) -> str:
     """
-    從駢儷賦體文章（.sr）中還原出可執行之森蚺 Python 代碼。
+    從駢儷賦體文章（.md / .sr）中還原出可執行之森蚺 Python 代碼。
     """
     py_lines = [
         "from senran import 引入, 書, 計, 疇, 總, 序, 錄, 譜, 若, 真, 假, 啟, 定",
@@ -131,7 +133,7 @@ def 解賦(駢文: str) -> str:
 
     for raw_line in lines:
         line = raw_line.strip()
-        if not line or line.startswith("#"):
+        if not line or line.startswith("#") or line.startswith(">") or line.startswith("---") or line.startswith("*"):
             continue
 
         # 計算原本縮排

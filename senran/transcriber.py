@@ -186,7 +186,7 @@ def main():
                 意向 = " ".join(sys.argv[2:])
                 成果 = 機巧使.策問(意向)
                 print("=" * 60)
-                print("📜【駢儷賦體 · 人讀卷帙 (.sr)】")
+                print("📜【駢儷賦體 · 人讀卷帙 (.md)】")
                 print("=" * 60)
                 print(成果["駢體賦"])
                 print("\n" + "=" * 60)
@@ -238,12 +238,12 @@ def main():
                 print(py_code)
             return
 
-        # 5. 賦體排版 (.sr)
+        # 5. 賦體排版 (.md)
         if cmd in ("format", "賦", "駢文"):
-            parser = argparse.ArgumentParser(description="森蚺駢文儀——將代碼排版為四六駢儷體文章 (.sr)")
+            parser = argparse.ArgumentParser(description="森蚺駢文儀——將代碼排版為四六駢儷體 Markdown 文章 (.md)")
             parser.add_argument("cmd", help="format / 賦")
             parser.add_argument("file", help="Python 原始腳本路徑")
-            parser.add_argument("-o", "--output", help="輸出之 .sr 賦體檔案路徑")
+            parser.add_argument("-o", "--output", help="輸出之 .md 賦體檔案路徑")
             args = parser.parse_args()
 
             with open(args.file, "r", encoding="utf-8") as f:
@@ -257,11 +257,11 @@ def main():
                 print(sr)
             return
 
-        # 6. 吟詠執行 (.sr)
+        # 6. 吟詠執行 (.md / .sr)
         if cmd in ("run", "吟", "行"):
-            parser = argparse.ArgumentParser(description="森蚺吟詠儀——執行 .sr 駢儷賦體文卷")
+            parser = argparse.ArgumentParser(description="森蚺吟詠儀——執行 .md 駢儷賦體文卷")
             parser.add_argument("cmd", help="run / 吟")
-            parser.add_argument("file", help="欲執行之 .sr 賦體檔案路徑")
+            parser.add_argument("file", help="欲執行之 .md 賦體檔案路徑")
             args = parser.parse_args()
 
             with open(args.file, "r", encoding="utf-8") as f:

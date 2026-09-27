@@ -576,13 +576,13 @@ function activate(context) {
     const text = document.getText();
     const pianwen = formatToPianwen(text);
 
-    // 於右側開啟新視窗展現 .sr 駢文
+    // 於右側開啟新視窗展現 Markdown 駢文
     const newDoc = await vscode.workspace.openTextDocument({
       content: pianwen,
-      language: 'senran'
+      language: 'markdown'
     });
     await vscode.window.showTextDocument(newDoc, vscode.ViewColumn.Beside);
-    vscode.window.showInformationMessage('📜【森蚺】賦體卷帙排印大成！已於側几展卷。');
+    vscode.window.showInformationMessage('📜【森蚺】駢儷賦體排印大成！已於側几展卷（Markdown 文卷）。');
   });
 
   context.subscriptions.push(completionProvider, hoverProvider, transcribeCommand, formatPianwenCommand);
@@ -720,8 +720,9 @@ function transcribeCode(code) {
 function formatToPianwen(code) {
   const lines = code.split("\n");
   const pianwenLines = [
-    "# ─── 📜【森蚺駢儷憲典 · 賦體卷】───",
-    "# 夫運籌於帷幄之中，決勝於方寸之間。",
+    "# 📜【森蚺駢儷憲典 · 賦體卷】",
+    "",
+    "> 夫運籌於帷幄之中，決勝於方寸之間。",
     ""
   ];
 
@@ -807,7 +808,8 @@ function formatToPianwen(code) {
   }
 
   pianwenLines.push("");
-  pianwenLines.push("# ─── 🪶【賦畢 · 算道咸吉】───");
+  pianwenLines.push("---");
+  pianwenLines.push("*🪶【賦畢 · 算道咸吉】*");
   return pianwenLines.join("\n");
 }
 
