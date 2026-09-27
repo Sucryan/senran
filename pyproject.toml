@@ -25,6 +25,5 @@ classifiers = [
 Homepage = "https://github.com/sucryan/senran"
 Repository = "https://github.com/sucryan/senran"
 
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["senran*"]
+[tool.setuptools]
+packages = ["senran", "senran.scrolls"]
