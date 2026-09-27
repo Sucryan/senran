@@ -15,26 +15,7 @@ from senran.formatter import 賦體, 解賦
 
 # 文言逆轉為標準西邦代碼之詞律表
 REVERSE_TRANSCRIPTION_RULES = [
-    # 內建函式
-    (r"\b書\s*\(", "print("),
-    (r"\b計\s*\(", "len("),
-    (r"\b疇\s*\(", "range("),
-    (r"\b總\s*\(", "sum("),
-    (r"\b求和\s*\(", "sum("),
-    (r"\b啟\s*\(", "open("),
-    (r"\b問\s*\(", "input("),
-    (r"\b序\s*\(", "sorted("),
-    (r"\b反\s*\(", "reversed("),
-    (r"\b審\s*\(", "type("),
-    (r"\b係\s*\(", "isinstance("),
-
-    # 常數
-    (r"\b真\b", "True"),
-    (r"\b假\b", "False"),
-    (r"\b空\b", "None"),
-    (r"\b無\b", "None"),
-
-    # 網絡屬性與方法
+    # 1. 屬性與方法調用 (避免與同名頂層函式混淆，如 .書() vs 書(), .譜() vs 譜())
     (r"\.格\b", ".status_code"),
     (r"\.態\b", ".status_code"),
     (r"\.文\b", ".text"),
@@ -64,6 +45,8 @@ REVERSE_TRANSCRIPTION_RULES = [
     # 數據與矩陣
     (r"\.陣\s*\(", ".array("),
     (r"\.形\b", ".shape"),
+    (r"\.總\s*\(\s*\)", ".sum()"),
+    (r"\.求和\s*\(\s*\)", ".sum()"),
     (r"\.均\s*\(\s*\)", ".mean()"),
     (r"\.皆零\s*\(", ".zeros("),
     (r"\.皆一\s*\(", ".ones("),
@@ -72,6 +55,12 @@ REVERSE_TRANSCRIPTION_RULES = [
     (r"\.冠\s*\(", ".head("),
     (r"\.履\s*\(", ".tail("),
     (r"\.描述\s*\(\s*\)", ".describe()"),
+    (r"\.開方\s*\(", ".sqrt("),
+    (r"\.正弦\s*\(", ".sin("),
+    (r"\.餘弦\s*\(", ".cos("),
+    (r"\.化字\s*\(", ".dumps("),
+    (r"\.析字\s*\(", ".loads("),
+    (r"\.通\s*\(", ".connect("),
 
     # 檔案與資料庫
     (r"\.閱\s*\(\s*\)", ".read()"),
@@ -92,9 +81,31 @@ REVERSE_TRANSCRIPTION_RULES = [
     (r"\.存圖\s*\(", ".savefig("),
     (r"\.展現\s*\(\s*\)", ".show()"),
 
+    # 2. 獨立頂層內建函式 (排斥以句點開頭的情況)
+    (r"(?<![a-zA-Z0-9_\u4e00-\u9fa5\.])書\s*\(", "print("),
+    (r"(?<![a-zA-Z0-9_\u4e00-\u9fa5\.])計\s*\(", "len("),
+    (r"(?<![a-zA-Z0-9_\u4e00-\u9fa5\.])疇\s*\(", "range("),
+    (r"(?<![a-zA-Z0-9_\u4e00-\u9fa5\.])總\s*\(", "sum("),
+    (r"(?<![a-zA-Z0-9_\u4e00-\u9fa5\.])求和\s*\(", "sum("),
+    (r"(?<![a-zA-Z0-9_\u4e00-\u9fa5\.])錄\s*\(", "list("),
+    (r"(?<![a-zA-Z0-9_\u4e00-\u9fa5\.])譜\s*\(", "dict("),
+    (r"(?<![a-zA-Z0-9_\u4e00-\u9fa5\.])啟\s*\(", "open("),
+    (r"(?<![a-zA-Z0-9_\u4e00-\u9fa5\.])問\s*\(", "input("),
+    (r"(?<![a-zA-Z0-9_\u4e00-\u9fa5\.])序\s*\(", "sorted("),
+    (r"(?<![a-zA-Z0-9_\u4e00-\u9fa5\.])反\s*\(", "reversed("),
+    (r"(?<![a-zA-Z0-9_\u4e00-\u9fa5\.])審\s*\(", "type("),
+    (r"(?<![a-zA-Z0-9_\u4e00-\u9fa5\.])係\s*\(", "isinstance("),
+    (r"(?<![a-zA-Z0-9_\u4e00-\u9fa5\.])剖\s*\(", "("),
+
+    # 常數
+    (r"(?<![a-zA-Z0-9_\u4e00-\u9fa5])真(?![a-zA-Z0-9_\u4e00-\u9fa5])", "True"),
+    (r"(?<![a-zA-Z0-9_\u4e00-\u9fa5])假(?![a-zA-Z0-9_\u4e00-\u9fa5])", "False"),
+    (r"(?<![a-zA-Z0-9_\u4e00-\u9fa5])空(?![a-zA-Z0-9_\u4e00-\u9fa5])", "None"),
+    (r"(?<![a-zA-Z0-9_\u4e00-\u9fa5])無(?![a-zA-Z0-9_\u4e00-\u9fa5])", "None"),
+
     # 物件導向、門類與自指逆轉 (OOP, Classes, Methods, self)
-    (r"\b己\.", "self."),
-    (r"\b己\b", "self"),
+    (r"(?<![a-zA-Z0-9_\u4e00-\u9fa5])己\.", "self."),
+    (r"(?<![a-zA-Z0-9_\u4e00-\u9fa5])己(?![a-zA-Z0-9_\u4e00-\u9fa5])", "self"),
     (r"\bclass\s+犬\b", "class Dog"),
     (r"\b犬\b", "Dog"),
     (r"\b犬一\b", "dog1"),
@@ -128,23 +139,26 @@ REVERSE_TRANSCRIPTION_RULES = [
     (r"\{self\.名\}", "{self.name}"),
     (r"\{self\.歲\}", "{self.age}"),
     (r"@定品\b", "@dataclass"),
+    (r"\.本(?=\.|\b|\s|\)|\]|,)", ""),
 ]
 
 IMPORT_RESTORE_RULES = [
-    (r"(\w+)\s*=\s*引入\(['\"]requests['\"]\)", r"import requests as \1"),
-    (r"(\w+)\s*=\s*引入\(['\"]httpx['\"]\)", r"import httpx as \1"),
-    (r"(\w+)\s*=\s*引入\(['\"]flask['\"]\)", r"import flask as \1"),
-    (r"(\w+)\s*=\s*引入\(['\"]fastapi['\"]\)", r"import fastapi as \1"),
-    (r"(\w+)\s*=\s*引入\(['\"]click['\"]\)", r"import click as \1"),
-    (r"(\w+)\s*=\s*引入\(['\"]torch['\"]\)", r"import torch as \1"),
-    (r"(\w+)\s*=\s*引入\(['\"]numpy['\"]\)", r"import numpy as \1"),
-    (r"(\w+)\s*=\s*引入\(['\"]pandas['\"]\)", r"import pandas as \1"),
-    (r"(\w+)\s*=\s*引入\(['\"]sqlite3['\"]\)", r"import sqlite3 as \1"),
-    (r"(\w+)\s*=\s*引入\(['\"]json['\"]\)", r"import json as \1"),
-    (r"(\w+)\s*=\s*引入\(['\"]math['\"]\)", r"import math as \1"),
+    (r"([^\s=]+)\s*=\s*引入\(['\"]requests['\"]\)", r"import requests as \1"),
+    (r"([^\s=]+)\s*=\s*引入\(['\"]httpx['\"]\)", r"import httpx as \1"),
+    (r"([^\s=]+)\s*=\s*引入\(['\"]flask['\"]\)", r"import flask as \1"),
+    (r"([^\s=]+)\s*=\s*引入\(['\"]fastapi['\"]\)", r"import fastapi as \1"),
+    (r"([^\s=]+)\s*=\s*引入\(['\"]click['\"]\)", r"import click as \1"),
+    (r"([^\s=]+)\s*=\s*引入\(['\"]torch['\"]\)", r"import torch as \1"),
+    (r"([^\s=]+)\s*=\s*引入\(['\"]torch\.nn['\"]\)", r"import torch.nn as \1"),
+    (r"([^\s=]+)\s*=\s*引入\(['\"]torch\.optim['\"]\)", r"import torch.optim as \1"),
+    (r"([^\s=]+)\s*=\s*引入\(['\"]numpy['\"]\)", r"import numpy as \1"),
+    (r"([^\s=]+)\s*=\s*引入\(['\"]pandas['\"]\)", r"import pandas as \1"),
+    (r"([^\s=]+)\s*=\s*引入\(['\"]sqlite3['\"]\)", r"import sqlite3 as \1"),
+    (r"([^\s=]+)\s*=\s*引入\(['\"]json['\"]\)", r"import json as \1"),
+    (r"([^\s=]+)\s*=\s*引入\(['\"]math['\"]\)", r"import math as \1"),
     (r"from\s+dataclasses\s+import\s+dataclass\s+as\s+定品", "from dataclasses import dataclass"),
-    (r"(\w+)\s*=\s*引入\(['\"]matplotlib\.pyplot['\"]\)", r"import matplotlib.pyplot as \1"),
-    (r"(\w+)\s*=\s*引入\(['\"](.+?)['\"]\)", r"import \2 as \1"),
+    (r"([^\s=]+)\s*=\s*引入\(['\"]matplotlib\.pyplot['\"]\)", r"import matplotlib.pyplot as \1"),
+    (r"([^\s=]+)\s*=\s*引入\(['\"](.+?)['\"]\)", r"import \2 as \1"),
 ]
 
 
@@ -152,6 +166,14 @@ def 轉西文(文言代碼: str) -> str:
     """
     將森蚺文言代碼逆轉為標準西邦 Python 代碼。
     """
+    # 處理 若().則().否則() 多行與單行轉為標準 if-else
+    文言代碼 = re.sub(
+        r"若\((.+?)\)\.則\(\s*lambda:\s*(.+?)\n\s*\)\.否則\(\s*lambda:\s*(.+?)\n\s*\)",
+        r"if \1:\n    \2\nelse:\n    \3",
+        文言代碼,
+        flags=re.DOTALL
+    )
+
     lines = 文言代碼.split("\n")
     new_lines = []
     alias_map = {}
@@ -205,7 +227,9 @@ def 轉西文(文言代碼: str) -> str:
                 break
 
         if not matched:
-            new_lines.append(line)
+            # 處理含有 引入(...) 包裹實例的情況 (如 網絡 = 引入(神兵.Linear(1, 1)))
+            unwrap_line = re.sub(r"=\s*引入\((.+)\)$", r"= \1", line)
+            new_lines.append(unwrap_line)
 
     replaced_lines = []
     for line in new_lines:
@@ -214,7 +238,7 @@ def 轉西文(文言代碼: str) -> str:
             replaced_lines.append(line)
         else:
             for orig_var, new_var in alias_map.items():
-                line = re.sub(r"\b" + orig_var + r"\.", new_var + ".", line)
+                line = re.sub(r"(?<![a-zA-Z0-9_\u4e00-\u9fa5])" + orig_var + r"\.", new_var + ".", line)
             replaced_lines.append(line)
 
     結果 = "\n".join(replaced_lines)

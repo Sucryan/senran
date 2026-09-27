@@ -938,28 +938,12 @@ function formatToPianwen(code) {
 
 // 逆轉為西邦原碼詞律表 (Reverse Transcription)
 const REVERSE_TRANSCRIPTION_RULES = [
-  [/\b書\s*\(/g, "print("],
-  [/\b計\s*\(/g, "len("],
-  [/\b疇\s*\(/g, "range("],
-  [/\b總\s*\(/g, "sum("],
-  [/\b求和\s*\(/g, "sum("],
-  [/\b啟\s*\(/g, "open("],
-  [/\b問\s*\(/g, "input("],
-  [/\b序\s*\(/g, "sorted("],
-  [/\b反\s*\(/g, "reversed("],
-  [/\b審\s*\(/g, "type("],
-  [/\b係\s*\(/g, "isinstance("],
-
-  [/\b真\b/g, "True"],
-  [/\b假\b/g, "False"],
-  [/\b空\b/g, "None"],
-  [/\b無\b/g, "None"],
-
-  [/\.格\b/g, ".status_code"],
-  [/\.態\b/g, ".status_code"],
-  [/\.文\b/g, ".text"],
-  [/\.實\b/g, ".content"],
-  [/\.質\b/g, ".content"],
+  // 1. 屬性與方法調用 (避免與同名頂層函式混淆，如 .書() vs 書(), .譜() vs 譜())
+  [/\.格(?![a-zA-Z0-9_\u4e00-\u9fa5])/g, ".status_code"],
+  [/\.態(?![a-zA-Z0-9_\u4e00-\u9fa5])/g, ".status_code"],
+  [/\.文(?![a-zA-Z0-9_\u4e00-\u9fa5])/g, ".text"],
+  [/\.實(?![a-zA-Z0-9_\u4e00-\u9fa5])/g, ".content"],
+  [/\.質(?![a-zA-Z0-9_\u4e00-\u9fa5])/g, ".content"],
   [/\.譜\s*\(\s*\)/g, ".json()"],
   [/\.得\s*\(/g, ".get("],
   [/\.取\s*\(/g, ".get("],
@@ -967,8 +951,8 @@ const REVERSE_TRANSCRIPTION_RULES = [
 
   [/\.反溯\s*\(\s*\)/g, ".backward()"],
   [/\.溯\s*\(\s*\)/g, ".backward()"],
-  [/\.勢\b/g, ".grad"],
-  [/\.梯度\b/g, ".grad"],
+  [/\.勢(?![a-zA-Z0-9_\u4e00-\u9fa5])/g, ".grad"],
+  [/\.梯度(?![a-zA-Z0-9_\u4e00-\u9fa5])/g, ".grad"],
   [/\.清勢\s*\(\s*\)/g, ".zero_grad()"],
   [/\.滌勢\s*\(\s*\)/g, ".zero_grad()"],
   [/\.步進\s*\(\s*\)/g, ".step()"],
@@ -981,15 +965,23 @@ const REVERSE_TRANSCRIPTION_RULES = [
   [/\.考分\s*\(/g, ".score("],
 
   [/\.陣\s*\(/g, ".array("],
-  [/\.形\b/g, ".shape"],
+  [/\.形(?![a-zA-Z0-9_\u4e00-\u9fa5])/g, ".shape"],
+  [/\.總\s*\(\s*\)/g, ".sum()"],
+  [/\.求和\s*\(\s*\)/g, ".sum()"],
   [/\.均\s*\(\s*\)/g, ".mean()"],
   [/\.皆零\s*\(/g, ".zeros("],
   [/\.皆一\s*\(/g, ".ones("],
   [/\.塑\s*\(/g, ".reshape("],
-  [/\.欄\b/g, ".columns"],
+  [/\.欄(?![a-zA-Z0-9_\u4e00-\u9fa5])/g, ".columns"],
   [/\.冠\s*\(/g, ".head("],
   [/\.履\s*\(/g, ".tail("],
   [/\.描述\s*\(\s*\)/g, ".describe()"],
+  [/\.開方\s*\(/g, ".sqrt("],
+  [/\.正弦\s*\(/g, ".sin("],
+  [/\.餘弦\s*\(/g, ".cos("],
+  [/\.化字\s*\(/g, ".dumps("],
+  [/\.析字\s*\(/g, ".loads("],
+  [/\.通\s*\(/g, ".connect("],
 
   [/\.閱\s*\(\s*\)/g, ".read()"],
   [/\.書\s*\(/g, ".write("],
@@ -1008,9 +1000,31 @@ const REVERSE_TRANSCRIPTION_RULES = [
   [/\.存圖\s*\(/g, ".savefig("],
   [/\.展現\s*\(\s*\)/g, ".show()"],
 
+  // 2. 獨立頂層內建函式 (排斥以句點開頭的情況)
+  [/(?<![a-zA-Z0-9_\u4e00-\u9fa5\.])書\s*\(/g, "print("],
+  [/(?<![a-zA-Z0-9_\u4e00-\u9fa5\.])計\s*\(/g, "len("],
+  [/(?<![a-zA-Z0-9_\u4e00-\u9fa5\.])疇\s*\(/g, "range("],
+  [/(?<![a-zA-Z0-9_\u4e00-\u9fa5\.])總\s*\(/g, "sum("],
+  [/(?<![a-zA-Z0-9_\u4e00-\u9fa5\.])求和\s*\(/g, "sum("],
+  [/(?<![a-zA-Z0-9_\u4e00-\u9fa5\.])錄\s*\(/g, "list("],
+  [/(?<![a-zA-Z0-9_\u4e00-\u9fa5\.])譜\s*\(/g, "dict("],
+  [/(?<![a-zA-Z0-9_\u4e00-\u9fa5\.])啟\s*\(/g, "open("],
+  [/(?<![a-zA-Z0-9_\u4e00-\u9fa5\.])問\s*\(/g, "input("],
+  [/(?<![a-zA-Z0-9_\u4e00-\u9fa5\.])序\s*\(/g, "sorted("],
+  [/(?<![a-zA-Z0-9_\u4e00-\u9fa5\.])反\s*\(/g, "reversed("],
+  [/(?<![a-zA-Z0-9_\u4e00-\u9fa5\.])審\s*\(/g, "type("],
+  [/(?<![a-zA-Z0-9_\u4e00-\u9fa5\.])係\s*\(/g, "isinstance("],
+  [/(?<![a-zA-Z0-9_\u4e00-\u9fa5\.])剖\s*\(/g, "("],
+
+  // 常數
+  [/(?<![a-zA-Z0-9_\u4e00-\u9fa5])真(?![a-zA-Z0-9_\u4e00-\u9fa5])/g, "True"],
+  [/(?<![a-zA-Z0-9_\u4e00-\u9fa5])假(?![a-zA-Z0-9_\u4e00-\u9fa5])/g, "False"],
+  [/(?<![a-zA-Z0-9_\u4e00-\u9fa5])空(?![a-zA-Z0-9_\u4e00-\u9fa5])/g, "None"],
+  [/(?<![a-zA-Z0-9_\u4e00-\u9fa5])無(?![a-zA-Z0-9_\u4e00-\u9fa5])/g, "None"],
+
   // 物件導向、門類與自指逆轉 (OOP, Classes, Methods, self)
-  [/\b己\./g, "self."],
-  [/\b己\b/g, "self"],
+  [/(?<![a-zA-Z0-9_\u4e00-\u9fa5])己\./g, "self."],
+  [/(?<![a-zA-Z0-9_\u4e00-\u9fa5])己(?![a-zA-Z0-9_\u4e00-\u9fa5])/g, "self"],
   [/\bclass\s+犬\b/g, "class Dog"],
   [/\b犬\b/g, "Dog"],
   [/\b犬一\b/g, "dog1"],
@@ -1037,31 +1051,41 @@ const REVERSE_TRANSCRIPTION_RULES = [
   [/\bdef\s+重開\b/g, "def reset"],
   [/\.重開\s*\(/g, ".reset("],
   [/def\s+__init__\s*\(\s*self\s*,\s*名\s*,\s*歲\s*\)/g, "def __init__(self, name, age)"],
+  [/\bself\.名\s*=\s*名\b/g, "self.name = name"],
+  [/\bself\.歲\s*=\s*歲\b/g, "self.age = age"],
   [/self\.名\b/g, "self.name"],
   [/self\.歲\b/g, "self.age"],
   [/\{self\.名\}/g, "{self.name}"],
   [/\{self\.歲\}/g, "{self.age}"],
-  [/@定品\b/g, "@dataclass"]
+  [/@定品\b/g, "@dataclass"],
+  [/\.本(?=\.|\b|\s|\)|\]|,)/g, ""]
 ];
 
 const REVERSE_IMPORT_RULES = [
-  [/^(\w+)\s*=\s*引入\(['"]requests['"]\)/, (m, p1) => (p1 === 'requests' || p1 === '求') ? 'import requests' : `import requests as ${p1}`],
-  [/^(\w+)\s*=\s*引入\(['"]httpx['"]\)/, (m, p1) => (p1 === 'httpx' || p1 === '疾求') ? 'import httpx' : `import httpx as ${p1}`],
-  [/^(\w+)\s*=\s*引入\(['"]flask['"]\)/, (m, p1) => (p1 === 'flask' || p1 === '壇') ? 'import flask' : `import flask as ${p1}`],
-  [/^(\w+)\s*=\s*引入\(['"]fastapi['"]\)/, (m, p1) => (p1 === 'fastapi' || p1 === '疾驛') ? 'import fastapi' : `import fastapi as ${p1}`],
-  [/^(\w+)\s*=\s*引入\(['"]click['"]\)/, (m, p1) => (p1 === 'click' || p1 === '敕令') ? 'import click' : `import click as ${p1}`],
+  [/^([^\s=]+)\s*=\s*引入\(['"]requests['"]\)/, (m, p1) => (p1 === 'requests' || p1 === '求') ? 'import requests' : `import requests as ${p1}`],
+  [/^([^\s=]+)\s*=\s*引入\(['"]httpx['"]\)/, (m, p1) => (p1 === 'httpx' || p1 === '疾求' || p1 === '求') ? 'import httpx' : `import httpx as ${p1}`],
+  [/^([^\s=]+)\s*=\s*引入\(['"]flask['"]\)/, (m, p1) => (p1 === 'flask' || p1 === '壇' || p1 === '法宴') ? 'import flask' : `import flask as ${p1}`],
+  [/^([^\s=]+)\s*=\s*引入\(['"]fastapi['"]\)/, (m, p1) => (p1 === 'fastapi' || p1 === '疾驛' || p1 === '急驛') ? 'import fastapi' : `import fastapi as ${p1}`],
+  [/^([^\s=]+)\s*=\s*引入\(['"]click['"]\)/, (m, p1) => (p1 === 'click' || p1 === '敕令' || p1 === '號令') ? 'import click' : `import click as ${p1}`],
   [/^from\s+dataclasses\s+import\s+dataclass\s+as\s+定品/, () => 'from dataclasses import dataclass'],
-  [/^(\w+)\s*=\s*引入\(['"]torch['"]\)/, (m, p1) => (p1 === 'torch' || p1 === '神算') ? 'import torch' : `import torch as ${p1}`],
-  [/^(\w+)\s*=\s*引入\(['"]numpy['"]\)/, (m, p1) => (p1 === 'numpy' || p1 === '算矩') ? 'import numpy' : `import numpy as ${p1}`],
-  [/^(\w+)\s*=\s*引入\(['"]pandas['"]\)/, (m, p1) => (p1 === 'pandas' || p1 === '史冊') ? 'import pandas' : `import pandas as ${p1}`],
-  [/^(\w+)\s*=\s*引入\(['"]sqlite3['"]\)/, (m, p1) => (p1 === 'sqlite3' || p1 === '庫') ? 'import sqlite3' : `import sqlite3 as ${p1}`],
-  [/^(\w+)\s*=\s*引入\(['"]json['"]\)/, (m, p1) => (p1 === 'json' || p1 === '法書') ? 'import json' : `import json as ${p1}`],
-  [/^(\w+)\s*=\s*引入\(['"]math['"]\)/, (m, p1) => (p1 === 'math' || p1 === '算術') ? 'import math' : `import math as ${p1}`],
-  [/^(\w+)\s*=\s*引入\(['"]matplotlib\.pyplot['"]\)/, (m, p1) => (p1 === 'plt' || p1 === '丹青') ? 'import matplotlib.pyplot as plt' : `import matplotlib.pyplot as ${p1}`],
-  [/^(\w+)\s*=\s*引入\(['"](.+?)['"]\)/, (m, p1, p2) => (p1 === p2) ? `import ${p2}` : `import ${p2} as ${p1}`]
+  [/^([^\s=]+)\s*=\s*引入\(['"]torch['"]\)/, (m, p1) => (p1 === 'torch' || p1 === '神算') ? 'import torch' : `import torch as ${p1}`],
+  [/^([^\s=]+)\s*=\s*引入\(['"]torch\.nn['"]\)/, (m, p1) => `import torch.nn as ${p1}`],
+  [/^([^\s=]+)\s*=\s*引入\(['"]torch\.optim['"]\)/, (m, p1) => `import torch.optim as ${p1}`],
+  [/^([^\s=]+)\s*=\s*引入\(['"]numpy['"]\)/, (m, p1) => (p1 === 'numpy' || p1 === '算矩') ? 'import numpy' : `import numpy as ${p1}`],
+  [/^([^\s=]+)\s*=\s*引入\(['"]pandas['"]\)/, (m, p1) => (p1 === 'pandas' || p1 === '史冊') ? 'import pandas' : `import pandas as ${p1}`],
+  [/^([^\s=]+)\s*=\s*引入\(['"]sqlite3['"]\)/, (m, p1) => (p1 === 'sqlite3' || p1 === '庫') ? 'import sqlite3' : `import sqlite3 as ${p1}`],
+  [/^([^\s=]+)\s*=\s*引入\(['"]json['"]\)/, (m, p1) => (p1 === 'json' || p1 === '法書') ? 'import json' : `import json as ${p1}`],
+  [/^([^\s=]+)\s*=\s*引入\(['"]math['"]\)/, (m, p1) => (p1 === 'math' || p1 === '算術') ? 'import math' : `import math as ${p1}`],
+  [/^([^\s=]+)\s*=\s*引入\(['"]matplotlib\.pyplot['"]\)/, (m, p1) => (p1 === 'plt' || p1 === '丹青') ? 'import matplotlib.pyplot as plt' : `import matplotlib.pyplot as ${p1}`],
+  [/^([^\s=]+)\s*=\s*引入\(['"](.+?)['"]\)/, (m, p1, p2) => (p1 === p2) ? `import ${p2}` : `import ${p2} as ${p1}`]
 ];
 
 function reverseTranscribeCode(code) {
+  // 處理 若().則().否則() 多行與單行轉為標準 if-else
+  code = code.replace(/若\((.+?)\)\.則\(\s*lambda:\s*(.+?)\n\s*\)\.否則\(\s*lambda:\s*(.+?)\n\s*\)/gs, (m, cond, ifBody, elseBody) => {
+    return `if ${cond.trim()}:\n    ${ifBody.trim()}\nelse:\n    ${elseBody.trim()}`;
+  });
+
   let lines = code.split("\n");
   let newLines = [];
   let aliasMap = {};
@@ -1078,12 +1102,17 @@ function reverseTranscribeCode(code) {
         if (/^求\s*=/.test(trimmed)) aliasMap["求"] = "requests";
         if (/^疾求\s*=/.test(trimmed)) aliasMap["疾求"] = "httpx";
         if (/^壇\s*=/.test(trimmed)) aliasMap["壇"] = "flask";
+        if (/^法宴\s*=/.test(trimmed)) aliasMap["法宴"] = "flask";
         if (/^疾驛\s*=/.test(trimmed)) aliasMap["疾驛"] = "fastapi";
+        if (/^急驛\s*=/.test(trimmed)) aliasMap["急驛"] = "fastapi";
         if (/^敕令\s*=/.test(trimmed)) aliasMap["敕令"] = "click";
+        if (/^號令\s*=/.test(trimmed)) aliasMap["號令"] = "click";
         if (/^神算\s*=/.test(trimmed)) aliasMap["神算"] = "torch";
         if (/^算矩\s*=/.test(trimmed)) aliasMap["算矩"] = "numpy";
         if (/^史冊\s*=/.test(trimmed)) aliasMap["史冊"] = "pandas";
         if (/^庫\s*=/.test(trimmed)) aliasMap["庫"] = "sqlite3";
+        if (/^法書\s*=/.test(trimmed)) aliasMap["法書"] = "json";
+        if (/^算術\s*=/.test(trimmed)) aliasMap["算術"] = "math";
         if (/^丹青\s*=/.test(trimmed)) aliasMap["丹青"] = "plt";
 
         let indent = line.slice(0, line.length - line.trimStart().length);
@@ -1092,13 +1121,17 @@ function reverseTranscribeCode(code) {
         break;
       }
     }
-    if (!matched) newLines.push(line);
+    if (!matched) {
+      // 處理含有 引入(...) 包裹實例的情況 (如 網絡 = 引入(神兵.Linear(1, 1)))
+      let unwrapLine = line.replace(/=\s*引入\((.+)\)$/, '= $1');
+      newLines.push(unwrapLine);
+    }
   }
 
   let result = newLines.join("\n");
 
   for (let [origVar, newVar] of Object.entries(aliasMap)) {
-    let reg = new RegExp(`\\b${origVar}\\.`, 'g');
+    let reg = new RegExp('(?<![a-zA-Z0-9_\\u4e00-\\u9fa5])' + origVar + '\\.', 'g');
     result = result.replace(reg, `${newVar}.`);
   }
 

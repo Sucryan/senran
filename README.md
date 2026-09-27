@@ -128,7 +128,7 @@ senran 策問 "我想訓練神經網路計算梯度"
 * ⚡ **通神符咒（Code Snippets）**：支援 `sr-init`（起手）、`sr-http`（雲端探訪）、`sr-torch`（深度神思）、`sr-file`（案牘卷宗）等一鍵展開。
 
 **一鍵載入法**：
-進入 VSCode 按下 `Ctrl+Shift+P` $\to$ 選取 `Extensions: Install from VSIX...` $\to$ 挑選 `vscode-extension/senran-vscode-0.1.4.vsix` 即可！
+進入 VSCode 按下 `Ctrl+Shift+P` $\to$ 選取 `Extensions: Install from VSIX...` $\to$ 挑選 `vscode-extension/senran-vscode-0.1.5.vsix` 即可！
 
 ---
 
