@@ -485,6 +485,21 @@ const LEXICON = [
 ];
 
 function activate(context) {
+  // 舊有 .py 封卷亦走森蚺執行入口，勿誤交原生 Python。
+  const recognizePacket = document => {
+    if (document.languageId !== 'python') return;
+    const firstLine = document.getText().split('\n', 1)[0];
+    if (!firstLine.startsWith('# senran-source-v1 ')) return;
+    try {
+      const metadata = JSON.parse(firstLine.slice('# senran-source-v1 '.length));
+      if (['names', 'runtime'].includes(metadata.mode)
+          && Object.hasOwn(metadata, 'source_hash') && Object.hasOwn(metadata, 'body_hash')) {
+        return vscode.languages.setTextDocumentLanguage(document, 'senran');
+      }
+    } catch (_) { /* 普通註解不作封卷。 */ }
+  };
+  for (const document of vscode.workspace.textDocuments) recognizePacket(document);
+  context.subscriptions.push(vscode.workspace.onDidOpenTextDocument(recognizePacket));
   // 1. 自動補全提供者 (Completion Item Provider)
   const completionProvider = vscode.languages.registerCompletionItemProvider(
     ['python', 'senran'],
@@ -604,6 +619,8 @@ function activate(context) {
       }
     });
 
+    await vscode.languages.setTextDocumentLanguage(document, 'senran');
+
     vscode.window.showInformationMessage(mode === 'zhpy'
       ? '🗣️【森蚺】周蟒白話轉錄大成！'
       : '🐍【森蚺】化俗為雅大成！已將代碼轉錄為古雅文言。');
@@ -672,10 +689,26 @@ function activate(context) {
       }
     });
 
+    await vscode.languages.setTextDocumentLanguage(document, 'python');
+
     vscode.window.showInformationMessage('💻【森蚺】化雅為俗大成！已將文言代碼逆轉為標準西邦代碼。');
   });
 
-  context.subscriptions.push(completionProvider, hoverProvider, transcribeCommand, toZhpyCommand, formatPianwenCommand, toStandardPyCommand);
+  const runCommand = vscode.commands.registerCommand('senran.runFile', async () => {
+    const document = vscode.window.activeTextEditor?.document;
+    if (!document || document.isUntitled) {
+      vscode.window.showWarningMessage('【森蚺】請先將文卷存檔，再行吟詠。');
+      return;
+    }
+    if (!await document.save()) return;
+    const python = vscode.workspace.getConfiguration('senran').get('pythonPath', 'python3');
+    const task = new vscode.Task({type: 'senran'}, vscode.TaskScope.Workspace,
+      '吟詠文卷', 'senran', new vscode.ProcessExecution(python,
+        ['-m', 'senran', 'run', document.fileName]));
+    await vscode.tasks.executeTask(task);
+  });
+
+  context.subscriptions.push(completionProvider, hoverProvider, transcribeCommand, toZhpyCommand, formatPianwenCommand, toStandardPyCommand, runCommand);
 }
 
 function deactivate() {}

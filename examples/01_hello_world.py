@@ -8,7 +8,7 @@ from pathlib import Path
 # 確保未安裝時亦可直接引用本地開發模組
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from senran import 書, 計, 疇, 總, 錄, 譜, 序, 反, 若, 真, 假
+from senran import 書, 計, 疇, 錄, 序, 反
 
 # 1. 几案印出
 書("【森蚺】問天地好在，四海安康！")
@@ -29,8 +29,7 @@ for 數 in 疇(1, 4):
 
 # 5. 若則邏輯
 功名 = 100
-若(功名 >= 60).則(
-    lambda: 書("明斷：及格矣，善哉！")
-).否則(
-    lambda: 書("明斷：當焚膏繼晷，再接再厲。")
-)
+if 功名 >= 60:
+    書("明斷：及格矣，善哉！")
+else:
+    書("明斷：當焚膏繼晷，再接再厲。")

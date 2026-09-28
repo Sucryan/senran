@@ -2,6 +2,66 @@ import unittest
 from senran.transcriber import 化雅
 
 class TestTranscriber(unittest.TestCase):
+    def test_real_hello_world_runs_natively_and_after_every_conversion(self):
+        import itertools
+        import subprocess
+        import sys
+        import tempfile
+        from pathlib import Path
+        from senran.bridge import convert
+        root = Path(__file__).resolve().parents[1]
+        file = root / 'examples' / '01_hello_world.py'
+        expected = ('【森蚺】問天地好在，四海安康！\n門徒人數： 4\n'
+                    '--- 報數三聲 ---\n第 1 聲：在！\n第 2 聲：在！\n第 3 聲：在！\n'
+                    '依理整飭： [1, 1, 2, 3, 4, 5, 6, 9]\n'
+                    '逆序而行： [6, 2, 9, 5, 1, 4, 1, 3]\n'
+                    '明斷：及格矣，善哉！\n')
+        baseline = subprocess.run([sys.executable, str(file)], cwd=root, capture_output=True, text=True)
+        self.assertEqual((baseline.returncode, baseline.stdout), (0, expected), baseline.stderr)
+        source = file.read_text()
+        with tempfile.TemporaryDirectory() as temp:
+            for order in itertools.permutations(('transcribe', 'zhpy', 'format', 'reverse')):
+                text, previous = source, None
+                for target in order:
+                    if previous == 'format':
+                        text = convert('unformat', text)
+                    text = convert(target, text)
+                    path = Path(temp) / ('hello.md' if target == 'format' else 'hello.py')
+                    path.write_text(text)
+                    result = subprocess.run([sys.executable, '-m', 'senran', 'run', str(path)],
+                                            cwd=root, capture_output=True, text=True)
+                    self.assertEqual((result.returncode, result.stdout), (0, expected), (order, target, result.stderr))
+                    previous = target
+                if previous == 'format':
+                    text = convert('unformat', text)
+                self.assertEqual(convert('reverse', text), source)
+            packet = convert('transcribe', source)
+            edited = packet + '\n書("編輯後仍可執行")\n'
+            for target in ('transcribe', 'zhpy', 'format', 'reverse'):
+                text = convert(target, edited)
+                path = Path(temp) / ('edited.md' if target == 'format' else 'edited.py')
+                path.write_text(text)
+                result = subprocess.run([sys.executable, '-m', 'senran', 'run', str(path)],
+                                        cwd=root, capture_output=True, text=True)
+                self.assertEqual((result.returncode, result.stdout),
+                                 (0, expected + '編輯後仍可執行\n'), (target, result.stderr))
+
+    def test_all_real_examples_compile_and_restore_exactly(self):
+        from pathlib import Path
+        from senran.bridge import convert
+        from senran.codec import to_python
+        examples = Path(__file__).resolve().parents[1] / 'examples'
+        for file in sorted(examples.glob('0[1-5]_*.py')):
+            source = file.read_text()
+            compile(source, str(file), 'exec')
+            for mode in ('transcribe', 'zhpy'):
+                packet = convert(mode, source)
+                compile(to_python(packet), str(file), 'exec')
+                restored = convert('markdown-reverse', convert('format', packet))
+                self.assertEqual(restored, source)
+                compile(to_python(packet + '\n# edited revision\n', editable=True), str(file), 'exec')
+
+
     def test_transcribe_basic_builtins(self):
         code = """
 print("hello world")

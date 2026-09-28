@@ -21,13 +21,12 @@ class ExtensionTests(unittest.TestCase):
         classical = convert('transcribe', plain)
         self.assertIn('術 ', classical.split('\n', 1)[1])
         self.assertEqual(convert('reverse', convert('zhpy', classical)), source)
-        with self.assertRaises(ValueError):
-            convert('zhpy', classical.replace('真', '假'))
-    def test_format_does_not_reseal_modified_packet(self):
+        edited = classical.replace('真', '假')
+        self.assertEqual(convert('reverse', convert('zhpy', edited)), source.replace('True', 'False'))
+    def test_format_reseals_current_revision_not_original(self):
         from senran.bridge import convert
         encoded = convert('transcribe', 'x = 1\n')
-        with self.assertRaises(ValueError):
-            convert('format', encoded.replace(' = 1', ' = 2'))
+        self.assertEqual(convert('markdown-reverse', convert('format', encoded.replace(' = 1', ' = 2'))), 'x = 2\n')
 
     @unittest.skipUnless(shutil.which('node'), '需要 Node.js 考校擴充介面')
     def test_registered_commands_convert_all_four_targets(self):
@@ -39,21 +38,38 @@ const load = Module._load;
 const commands = new Map();
 const source = 'class Box:\n    def value(self):\n        return 3\n';
 const document = {value: source, languageId: 'python', version: 1,
+  fileName: '/tmp/a script.senran', isUntitled: false, async save() { return true; },
   getText() { return this.value; }, positionAt(n) { return n; }};
 const editor = {document, selection: {isEmpty: true},
   async edit(callback) { callback({replace(range, value) { document.value = value; document.version++; }}); }};
 let opened;
+const existing = {...document, value: '# senran-source-v1 {"mode":"names","style":"senran","source_hash":"a","body_hash":"b"}\n納 sys\n'};
+const ordinary = {...document, value: '# senran-source-v1 {"mode":"names"}\nprint(7)\n'};
+let task;
 const vscode = {CompletionItemKind: {}, Range: class {}, ViewColumn: {Beside: 2},
-  languages: {registerCompletionItemProvider() {}, registerHoverProvider() {}},
+  TaskScope: {Workspace: 1},
+  ProcessExecution: class {constructor(command, args) {this.command = command; this.args = args;}},
+  Task: class {constructor(definition, scope, name, source, execution) {this.execution = execution;}},
+  tasks: {async executeTask(value) {task = value;}},
+  languages: {registerCompletionItemProvider() {}, registerHoverProvider() {},
+    async setTextDocumentLanguage(doc, language) { doc.languageId = language; return doc; }},
   commands: {registerCommand(name, fn) { commands.set(name, fn); }},
-  workspace: {getConfiguration() { return {get() {return 'python3';}}; },
+  workspace: {textDocuments: [existing, ordinary], onDidOpenTextDocument() {},
+    getConfiguration() { return {get() {return 'python3';}}; },
     async openTextDocument(options) { opened = options.content; return options; }},
   window: {activeTextEditor: editor, showWarningMessage() {}, showInformationMessage() {},
     showErrorMessage(message) {throw Error(message);}, async showTextDocument() {}}};
 Module._load = function(name, ...args) { return name === 'vscode' ? vscode : load.call(this, name, ...args); };
 require('./vscode-extension/extension.js').activate({subscriptions: []});
 (async () => {
+  assert.equal(existing.languageId, 'senran');
+  assert.equal(ordinary.languageId, 'python');
   await commands.get('senran.toZhpy')();
+  assert.equal(document.languageId, 'senran');
+  assert.ok(commands.has('senran.runFile'));
+  await commands.get('senran.runFile')();
+  assert.equal(task.execution.command, 'python3');
+  assert.deepEqual(task.execution.args, ['-m', 'senran', 'run', document.fileName]);
   assert.match(document.value, /類別 Box:/);
   await commands.get('senran.transcribe')();
   assert.match(document.value, /類 /);
@@ -63,6 +79,7 @@ require('./vscode-extension/extension.js').activate({subscriptions: []});
   await commands.get('senran.formatPianwen')();
   document.value = opened;
   await commands.get('senran.toStandardPy')();
+  assert.equal(document.languageId, 'python');
   assert.equal(document.value, source);
 })();
 '''
@@ -91,7 +108,7 @@ const {convertCode} = require('./vscode-extension/extension.js');
   assert.equal(await convertCode('unformat', poem), elegant);
   assert.equal(await convertCode('markdown-reverse', poem), source);
   await assert.rejects(convertCode('invalid', source));
-  await assert.rejects(convertCode('reverse', elegant.replace(' 1)', ' 2)')));
+  assert.equal(await convertCode('reverse', elegant.replace(' 1)', ' 2)')), source.replace(' 1)', ' 2)'));
 })();
 '''
         subprocess.run(['node', '-e', script], cwd=root, check=True, capture_output=True, text=True)
